@@ -1,0 +1,186 @@
+%==============================================================================
+%  Mini project report 
+%  Bayesian Networks and Markov Models in Action, 2026--2027
+%
+%  Rules (see project/instructions.pdf):
+%   - at most 8 single-column pages, excluding the references and the appendices;
+%   - written in English; do not change the font size, the margins or the spacing;
+%   - every number, figure and table must be produced by the submitted code.
+%
+%  The text in italics in each section explains what is expected: replace it
+%  with your own content. You can use Overleaf for collaborative text editing. 
+%==============================================================================
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=blue,urlcolor=blue]{hyperref}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage[left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\setlength{\parskip}{6pt}
+
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% Guidance text: delete every \guide{...} once the section is written.
+\newcommand{\guide}[1]{\textit{\textcolor{gray}{#1}}}
+
+% Notation used in the course (add your own macros here)
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\given}{\,\vert\,}
+
+\renewcommand{\headrulewidth}{0pt}
+
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyfoot[L]{Bayesian Networks and Markov Models in Action}
+\fancyfoot[R]{\thepage}
+\fancyhead{} 
+
+
+\begin{document}
+
+%--------------------------------------------------------------------------
+%  Title and authors
+%--------------------------------------------------------------------------
+
+\begin{center}
+{\Large
+	{\sc Title of the Project}
+}
+\bigskip
+
+First Name Last Name $^{1}$ \& \underline{First Name Last Name} $^{2}$
+\bigskip
+
+{\it
+$^{1}$ Program, Institution, Country, e-mail of author 1\\
+$^{2}$ Program, Institution, Country, e-mail of author 2
+}
+\end{center}
+\guide{Underline the name of the group member who submits the archive.}
+\bigskip
+
+%--------------------------------------------------------------------------
+%  Abstract
+%--------------------------------------------------------------------------
+
+{\bf Abstract.} \guide{A short summary of the project (at most 500 words): the question, the data, the model, the method, and the main result with its uncertainty. Write it last.}
+
+{\bf Keywords.} \guide{Three to five keywords, for example: Bayesian inference; hierarchical model; Markov chain Monte Carlo; marketing.}
+
+\bigskip\bigskip
+
+%--------------------------------------------------------------------------
+\section{Introduction}\label{sec:introduction}
+%--------------------------------------------------------------------------
+
+\guide{About half a page. Explain the context and state the question that the project answers, as precisely as possible (for example: ``Which of the three campaigns has the highest conversion rate, and with what probability?''). Say why the answer is uncertain and why a Bayesian approach is appropriate. Summarize what you did and what you found, and announce the organization of the report.}
+
+%--------------------------------------------------------------------------
+\section{Data}\label{sec:data}
+%--------------------------------------------------------------------------
+
+\guide{Describe the data: source (with a citation), period, number of observations, variables, and any preprocessing (cleaning, aggregation, transformations). If the data are simulated, explain how and why. Show one descriptive figure or table, and point out the features of the data that the model must capture.}
+
+\begin{table}[h]
+  \centering
+  \caption{\guide{Example table: a summary of the data. Replace with your own.}}
+  \label{tab:data}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    Group & Observations & Mean \\
+    \midrule
+    A & 200 & 0.060 \\
+    B & 180 & 0.072 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+%--------------------------------------------------------------------------
+\section{Model}\label{sec:model}
+%--------------------------------------------------------------------------
+
+\guide{Specify the Bayesian model completely}
+\begin{itemize}
+  \item \guide{The unknown parameters $\theta$ and, if any, the latent variables.}
+  \item \guide{The likelihood $p(\by\given\theta)$, or the simulator if the likelihood cannot be evaluated.}
+  \item \guide{The prior $\pi(\theta)$, with a justification for each choice (previous studies, plausible ranges, prior predictive simulations).}
+  \item \guide{The resulting posterior, up to its normalizing constant, as in \eqref{eq:posterior}.}
+  \item \guide{The assumptions of the model and why they are reasonable here.}
+\end{itemize}
+\guide{A diagram of the model as a Bayesian network (a directed acyclic graph) is encouraged.}
+%
+\begin{equation}\label{eq:posterior}
+  \pi(\theta\given\by) = \frac{p(\by\given\theta)\,\pi(\theta)}{p(\by)} \propto p(\by\given\theta)\,\pi(\theta),
+  \qquad p(\by) = \int p(\by\given\theta)\,\pi(\theta)\,d\theta .
+\end{equation}
+
+%--------------------------------------------------------------------------
+\section{Method}\label{sec:method}
+%--------------------------------------------------------------------------
+
+\guide{Describe the simulation method that you implemented (for example, Metropolis--Hastings, a Gibbs sampler, importance sampling or approximate Bayesian computation) and why it suits your model. Give the algorithm in pseudo-code, or as precise equations. Explain the tuning choices and how you made them: proposal distributions and step sizes, number of iterations and burn-in, number of chains and their starting points, tolerances and summary statistics for ABC. State which parts you implemented yourselves and which libraries you used.}
+
+%--------------------------------------------------------------------------
+\section{Validation on simulated data}\label{sec:validation}
+%--------------------------------------------------------------------------
+
+\guide{Simulate a data set from your model with parameter values that you choose (the ``true'' values), of the same size as the real data. Run your method on it and show that the posterior recovers the true values: report them next to the posterior means and intervals, in a table or a figure. Repeat for several true values or data sets if possible. Explain any discrepancy before moving to the real data.}
+
+%--------------------------------------------------------------------------
+\section{Results}\label{sec:results}
+%--------------------------------------------------------------------------
+
+\guide{Apply the method to the data of~\cref{sec:data}. Organize this section in subsections, for example:}
+\begin{description}
+  \item \guide{\textbf{Diagnostics}: trace plots, $\hat R$ across several chains, autocorrelations and effective sample sizes, acceptance rates, Monte Carlo standard errors, or the effect of the tolerance for ABC. Show that the numbers can be trusted before interpreting them.}
+  \item \guide{\textbf{Posterior summaries}: means, standard deviations and credible intervals of the parameters, and probabilities of the events of interest, for example $\Pr(\theta > 0.05\given\by)$.}
+  \item \guide{\textbf{Model checking}: posterior predictive simulations compared with the observed data.}
+  \item \guide{\textbf{Sensitivity}: how the conclusions change with other reasonable priors or modelling choices.}
+\end{description}
+\guide{Every figure needs labeled axes and a caption that says what it shows and what to conclude from it, as in \Cref{fig:example}. Refer to every figure and table in the text.}
+
+\begin{figure}[h]
+  \centering
+  % \includegraphics[width=0.7\linewidth]{figures/trace.pdf}
+  \caption{\guide{Example caption: trace plots of four chains for $\theta$, started from dispersed points; after a burn-in of 1\,000 iterations the chains overlap ($\hat R = 1.00$).}}
+  \label{fig:example}
+\end{figure}
+
+%--------------------------------------------------------------------------
+\section{Discussion and conclusion}\label{sec:discussion}
+%--------------------------------------------------------------------------
+
+\guide{Answer the question of the introduction, with its uncertainty, in words that a non-specialist could act on. Discuss the limitations honestly: assumptions that may not hold, weaknesses of the data, difficulties of the method (e.g., slow mixing, sensitivity to tuning). Say what you would do with more time or more data.}
+
+%--------------------------------------------------------------------------
+%  References (not counted in the 8 pages)
+%--------------------------------------------------------------------------
+
+\guide{Cite every source you use: data, articles, books, and code that you reused or adapted, for example \cite{robert2004monte,gelman2013bayesian}. The references should be included into the file references.bib.}
+
+\bibliographystyle{apalike}
+\bibliography{references}
+
+%--------------------------------------------------------------------------
+%  Appendices (optional, not counted in the 8 pages)
+%--------------------------------------------------------------------------
+\appendix
+\crefalias{section}{appendix}
+
+\section{Additional material}\label{app:additional}
+
+\guide{Optional. Derivations (for example, full conditional distributions), additional figures and diagnostics, and a description of the code: which file produces which figure or table. The main text must be understandable without the appendices.}
+
+\end{document}

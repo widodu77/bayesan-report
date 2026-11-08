@@ -1,0 +1,16 @@
+statistic,value
+"games, all results",18537.0
+"white wins, share of all results",0.4971138803474133
+"black wins, share of all results",0.4567621513729298
+"draws, share of all results",0.0461239682796569
+"games, decisive",17682.0
+"white wins, share of decisive",0.5211514534554914
+openings,359.0
+median games per opening,10.0
+openings with one game,47.0
+openings with at least 30 games,95.0
+games in openings with at least 30 games,15442.0
+distinct players,14832.0
+share of games with a player rated exactly 1500,0.0728424386381631
+share of games that are rated,0.8142178486596539
+standard deviation of delta,0.6122354631698391
