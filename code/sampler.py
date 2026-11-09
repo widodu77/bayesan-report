@@ -142,12 +142,14 @@ def _run_seeded_chain(args):
     return run_chain(data, priors, steps, n_iter, np.random.default_rng(seed))
 
 
-def fit(data, priors, seed, n_chains=4, n_burn=2000, n_keep=5000, n_pilot=2000, parallel=False):
+def fit(data, priors, seed, n_chains=4, n_burn=2000, n_keep=5000, n_pilot=2000, parallel=False,
+        keep_burn_in=False):
     """Tune on a pilot run, then run the chains from dispersed starting points drawn from the prior.
 
     With parallel=True each chain runs in its own process. Every chain has its own seed, so the
     draws are the same either way.
-    Returns arrays of shape (chains, n_keep, ...) and the acceptance rates after burn-in.
+    Returns arrays of shape (chains, n_keep, ...), or (chains, n_burn + n_keep, ...) with
+    keep_burn_in=True, and the acceptance rates after burn-in.
     """
     pilot_seed, *chain_seeds = np.random.SeedSequence(seed).spawn(n_chains + 1)
     steps = tune_steps(data, priors, np.random.default_rng(pilot_seed), n_pilot)
@@ -158,7 +160,8 @@ def fit(data, priors, seed, n_chains=4, n_burn=2000, n_keep=5000, n_pilot=2000, 
             results = list(pool.map(_run_seeded_chain, jobs))
     else:
         results = [_run_seeded_chain(job) for job in jobs]
-    draws = {name: np.stack([r[0][name][n_burn:] for r in results])
+    first = 0 if keep_burn_in else n_burn
+    draws = {name: np.stack([r[0][name][first:] for r in results])
              for name in ("beta", "mu", "sigma", "theta")}
     acceptance = {"theta": np.mean([r[1][n_burn:].mean(axis=0) for r in results], axis=0),
                   "beta": np.mean([r[2][n_burn:].mean() for r in results])}
