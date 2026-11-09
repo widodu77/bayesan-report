@@ -46,13 +46,26 @@ class Steps:
     beta: float
 
 
-def load_games(path=PROCESSED):
-    """Load the decisive games and return them with the ECO code of each opening index."""
+def load_games(path=PROCESSED, draws_as_half=False, rated_only=False, drop_rating=None, min_plies=None):
+    """Load the games and return them with the ECO code of each opening index.
+
+    By default only decisive games are kept. The options give the variants of the data sensitivity
+    analysis: draws_as_half keeps the draws with y = 0.5, rated_only keeps the rated games,
+    drop_rating removes the games with a player at exactly that rating, and min_plies removes
+    the games shorter than that (the processed file already has at least 10 plies).
+    """
     games = pd.read_csv(path)
-    games = games[games["winner"] != "draw"]
+    if not draws_as_half:
+        games = games[games["winner"] != "draw"]
+    if rated_only:
+        games = games[games["rated"]]
+    if drop_rating is not None:
+        games = games[(games["white_rating"] != drop_rating) & (games["black_rating"] != drop_rating)]
+    if min_plies is not None:
+        games = games[games["turns"] >= min_plies]
     opening, codes = pd.factorize(games["opening_eco"], sort=True)
-    data = Games(y=(games["winner"] == "white").to_numpy(dtype=float),
-                 delta=games["delta"].to_numpy(), opening=opening, n_openings=len(codes))
+    y = (games["winner"] == "white").to_numpy(dtype=float) + 0.5 * (games["winner"] == "draw").to_numpy()
+    data = Games(y=y, delta=games["delta"].to_numpy(), opening=opening, n_openings=len(codes))
     return data, np.asarray(codes)
 
 
