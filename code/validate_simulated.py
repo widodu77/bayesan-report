@@ -6,7 +6,8 @@ chance miss that a 90% interval makes one time in ten.
 Part 3 draws the parameters from the prior for many data sets and measures interval coverage,
 which is exact on average over the prior when the sampler is correct.
 
-Output: tables/validation_recovery.csv, tables/validation_repeated.csv, tables/validation_coverage.csv
+Output: tables/validation_recovery.csv, tables/validation_recovery_theta.csv, tables/validation_repeated.csv,
+tables/validation_coverage.csv
 """
 import os
 from concurrent.futures import ProcessPoolExecutor
@@ -39,8 +40,10 @@ def recovery(data):
     table["inside_90"] = (table["truth"] >= table["q05"]) & (table["truth"] <= table["q95"])
 
     low, high = np.percentile(draws["theta"], [5, 95], axis=(0, 1))
-    theta_coverage = np.mean((theta >= low) & (theta <= high))
-    return table, theta_coverage, acceptance
+    openings = pd.DataFrame({"games": data.games_per_opening, "truth": theta,
+                             "mean": draws["theta"].mean(axis=(0, 1)), "q05": low, "q95": high})
+    openings["inside_90"] = (theta >= low) & (theta <= high)
+    return table, openings, acceptance
 
 
 def one_repeat(args):
@@ -110,12 +113,14 @@ def coverage(data):
 
 
 def main():
-    data, _ = load_games()
-    table, theta_coverage, acceptance = recovery(data)
+    data, codes = load_games()
+    table, openings, acceptance = recovery(data)
     TABLES.mkdir(exist_ok=True)
     table.to_csv(TABLES / "validation_recovery.csv", index=False)
+    openings.insert(0, "opening_eco", codes)
+    openings.to_csv(TABLES / "validation_recovery_theta.csv", index=False)
     print(table.round(4).to_string(index=False))
-    print(f"share of true theta inside their 90% intervals: {theta_coverage:.3f}")
+    print(f"share of true theta inside their 90% intervals: {openings['inside_90'].mean():.3f}")
     print(f"acceptance: beta {acceptance['beta']:.2f}, theta median {np.median(acceptance['theta']):.2f}, "
           f"range {acceptance['theta'].min():.2f}-{acceptance['theta'].max():.2f}", flush=True)
 
