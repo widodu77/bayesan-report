@@ -5,6 +5,7 @@ For game i played in opening o(i):
     theta_o ~ Normal(mu, 1 / tau)
     mu ~ Normal(mu_mean, mu_sd^2), beta ~ Normal(beta_mean, beta_sd^2), tau ~ Gamma(shape, rate)
 """
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -136,16 +137,27 @@ def tune_steps(data, priors, rng, n_pilot):
                  beta=ROBERTS_SCALE * draws["beta"][kept:].std())
 
 
-def fit(data, priors, seed, n_chains=4, n_burn=2000, n_keep=5000, n_pilot=2000):
+def _run_seeded_chain(args):
+    data, priors, steps, n_iter, seed = args
+    return run_chain(data, priors, steps, n_iter, np.random.default_rng(seed))
+
+
+def fit(data, priors, seed, n_chains=4, n_burn=2000, n_keep=5000, n_pilot=2000, parallel=False):
     """Tune on a pilot run, then run the chains from dispersed starting points drawn from the prior.
 
+    With parallel=True each chain runs in its own process. Every chain has its own seed, so the
+    draws are the same either way.
     Returns arrays of shape (chains, n_keep, ...) and the acceptance rates after burn-in.
     """
     pilot_seed, *chain_seeds = np.random.SeedSequence(seed).spawn(n_chains + 1)
     steps = tune_steps(data, priors, np.random.default_rng(pilot_seed), n_pilot)
 
-    results = [run_chain(data, priors, steps, n_burn + n_keep, np.random.default_rng(s))
-               for s in chain_seeds]
+    jobs = [(data, priors, steps, n_burn + n_keep, s) for s in chain_seeds]
+    if parallel:
+        with ProcessPoolExecutor(max_workers=n_chains) as pool:
+            results = list(pool.map(_run_seeded_chain, jobs))
+    else:
+        results = [_run_seeded_chain(job) for job in jobs]
     draws = {name: np.stack([r[0][name][n_burn:] for r in results])
              for name in ("beta", "mu", "sigma", "theta")}
     acceptance = {"theta": np.mean([r[1][n_burn:].mean(axis=0) for r in results], axis=0),
