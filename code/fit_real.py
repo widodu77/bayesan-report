@@ -16,6 +16,7 @@ TABLES = ROOT / "tables"
 RESULTS = ROOT / "results"
 SEED = 20261110
 THETA_THIN = 10
+N_BURN = 2000
 N_KEEP = 40_000  # per chain, for an ESS of sigma above 1,000
 
 
@@ -80,12 +81,16 @@ def diagnostics_table(openings, shared, acceptance):
 
 def main():
     data, codes = load_games()
-    draws, acceptance, _ = fit(data, Priors(), SEED, n_burn=2000, n_keep=N_KEEP, n_pilot=3000, parallel=True)
+    chains, acceptance, _ = fit(data, Priors(), SEED, n_burn=N_BURN, n_keep=N_KEEP, n_pilot=3000, parallel=True,
+                                keep_burn_in=True)
+    draws = {name: chain[:, N_BURN:] for name, chain in chains.items()}
 
     TABLES.mkdir(exist_ok=True)
     RESULTS.mkdir(exist_ok=True)
+    # The burn-in of the shared parameters is kept only for the trace plots.
     np.savez_compressed(RESULTS / "draws.npz", beta=draws["beta"], mu=draws["mu"], sigma=draws["sigma"],
-                        theta=draws["theta"][:, ::THETA_THIN].astype(np.float32), codes=codes)
+                        theta=draws["theta"][:, ::THETA_THIN].astype(np.float32), codes=codes,
+                        **{f"burn_in_{name}": chains[name][:, :N_BURN] for name in ("beta", "mu", "sigma")})
 
     shared = shared_table(draws)
     openings = opening_table(data, codes, draws)
