@@ -16,6 +16,7 @@ TABLES = ROOT / "tables"
 RESULTS = ROOT / "results"
 SEED = 20261110
 THETA_THIN = 10
+N_KEEP = 40_000  # per chain, for an ESS of sigma above 1,000
 
 
 def logistic(x):
@@ -79,7 +80,7 @@ def diagnostics_table(openings, shared, acceptance):
 
 def main():
     data, codes = load_games()
-    draws, acceptance, _ = fit(data, Priors(), SEED, n_burn=2000, n_keep=10_000, n_pilot=3000)
+    draws, acceptance, _ = fit(data, Priors(), SEED, n_burn=2000, n_keep=N_KEEP, n_pilot=3000, parallel=True)
 
     TABLES.mkdir(exist_ok=True)
     RESULTS.mkdir(exist_ok=True)

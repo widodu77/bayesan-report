@@ -1,9 +1,9 @@
 statistic,value
-acceptance rate of beta,0.45489999999999997
-median acceptance rate of theta,0.42655
-lowest acceptance rate of theta,0.38582500000000003
-highest acceptance rate of theta,0.467625
-"largest split-Rhat, shared parameters",1.0047563819106218
-"smallest ESS, shared parameters",426.93042177741125
-"largest split-Rhat, theta",1.0022247613956408
-"smallest ESS, theta",2466.103650711553
+acceptance rate of beta,0.456375
+median acceptance rate of theta,0.4276
+lowest acceptance rate of theta,0.38774375
+highest acceptance rate of theta,0.46715625000000005
+"largest split-Rhat, shared parameters",1.0016788484364398
+"smallest ESS, shared parameters",1648.966734921437
+"largest split-Rhat, theta",1.0004910885308658
+"smallest ESS, theta",9769.94175294873

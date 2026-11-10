@@ -15,7 +15,7 @@ python fit_real.py
 ```
 
 `download_data.py` does nothing if `data/raw/games.csv` is already there.
-`check_sampler.py` takes about 1 minute, `validate_simulated.py` over 8 minutes on 12 processes, and `fit_real.py` about 2.5 minutes.
+`check_sampler.py` takes about 1 minute, `validate_simulated.py` over 8 minutes on 12 processes, and `fit_real.py` about 1.5 minutes with its four chains run in parallel.
 Random seeds are fixed in each script.
 
 ## What produces what
