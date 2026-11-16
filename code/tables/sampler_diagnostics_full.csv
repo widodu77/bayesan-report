@@ -1,0 +1,13 @@
+statistic,value
+"acceptance rate of beta (rated, unrated)","[0.41, 0.411]"
+median acceptance rate of theta,0.35755000000000003
+median acceptance rate of the player effects,0.44351874999999996
+lowest and highest acceptance rate of the player effects,"[0.382, 0.501]"
+"largest split-Rhat, shared parameters",1.0048438389310896
+"smallest ESS, shared parameters",1113.8237023784484
+"largest split-Rhat, first moves",1.00717678335095
+"smallest ESS, first moves",852.4229037418419
+"largest split-Rhat, pairs",1.00523980602282
+"smallest ESS, pairs",1096.1100892014388
+"largest split-Rhat, players with at least 10 games (draws kept every 40)",1.0026685421212662
+"smallest ESS, players with at least 10 games (draws kept every 40)",2553.918449194735
