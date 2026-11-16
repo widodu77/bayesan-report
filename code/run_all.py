@@ -50,6 +50,8 @@ STEPS = [
     "fig_rating_slopes.py",
     "fig_moves.py",
     "fig_posterior_predictive_full.py",
+    # Every number and table of the report
+    "make_report_numbers.py",
 ]
 
 

@@ -1,94 +1,69 @@
-# Which chess openings give White an edge?
+# Who controls White's first-move advantage?
 
-Code for the project of Walid Ajbar and Millan Das, Bayesian Networks and Markov Models in Action.
+Code for the project of Walid Ajbar and Millan Das, Bayesian Networks and Markov Models in Action (CentraleSupélec, 2026).
+
+A Bayesian logistic regression of 17,682 decisive Lichess games on the rating gap, with hierarchical effects for White's first move and Black's reply, one rating slope for rated and one for unrated games, and one effect per player. All samplers and diagnostics are written by us with NumPy; PyMC is used only for an optional cross-check.
 
 ## How to run
 
-From this folder, with the packages of `requirements.txt` installed:
+With Python 3.12 and the packages of `requirements.txt` installed, from this folder:
 
 ```
-python download_data.py
-python prepare_data.py
-python check_sampler.py
-python validate_simulated.py
-python fit_real.py
+python run_all.py
 ```
 
-`download_data.py` does nothing if `data/raw/games.csv` is already there.
-`check_sampler.py` takes about 1 minute, `validate_simulated.py` over 8 minutes on 12 processes, and `fit_real.py` about 1.5 minutes with its four chains run in parallel.
-Random seeds are fixed in each script.
+This runs every step below in order, from the raw data to the figures and the numbers of the report, and stops at the first failure. It takes about 3 hours on a 16-core machine; the validation scripts and the sensitivity analyses are the long steps, and they run several processes in parallel. Each script can also be run alone, in the order of `run_all.py`. Random seeds are fixed in every script, so a rerun reproduces every number (up to the last floating-point digits on a different machine).
+
+`python run_all.py --with-pymc` also runs the optional PyMC cross-check, which needs `pip install -r requirements-crosscheck.txt`.
+
+To build the report, from `../report`: `pdflatex report`, `bibtex report`, then `pdflatex report` twice. The report reads its figures from `figures/` and its numbers and tables from `../report/generated/`, written by `make_report_numbers.py`, so every number in it comes from this code.
+
+The data, `data/raw/games.csv`, is included (CC0); `download_data.py` downloads it again only if it is missing.
 
 ## What produces what
 
-| Script | Output |
-| --- | --- |
-| `download_data.py` | `data/raw/games.csv` |
-| `prepare_data.py` | `data/processed/games_clean.csv`, `tables/data_cleaning.csv`, `tables/data_summary.csv` |
-| `check_sampler.py` | `tables/check_quadrature.csv` |
-| `validate_simulated.py` | `tables/validation_recovery.csv`, `tables/validation_repeated.csv`, `tables/validation_coverage.csv` |
-| `fit_real.py` | `results/draws.npz`, `tables/posterior_shared.csv`, `tables/posterior_openings.csv`, `tables/sampler_diagnostics.csv` |
+The report has three models besides the final one: $M_0$ with one effect per opening code, $M_1$ with rated and unrated slopes, $M_2$ with first moves and replies, and the final model $M_3$ with player effects.
 
-`sampler.py` holds the model and the sampler, and `diagnostics.py` the convergence measures.
+| Script | Outputs | In the report |
+| --- | --- | --- |
+| `download_data.py` | `data/raw/games.csv` | Section 2 |
+| `prepare_data.py` | `data/processed/games_clean.csv`, `tables/data_cleaning.csv`, `tables/data_summary.csv` | Section 2 |
+| `check_sampler.py` | `tables/check_quadrature.csv` | Section 5 (grid check of $M_0$) |
+| `validate_simulated.py` | `tables/validation_recovery.csv`, `validation_recovery_theta.csv`, `validation_repeated.csv`, `validation_coverage.csv` | Table 1, Figure 9 |
+| `fit_real.py` | `results/draws.npz`, `tables/posterior_shared.csv`, `posterior_openings.csv`, `sampler_diagnostics.csv` | Section 6 ($M_0$), Figures 10, 12 |
+| `posterior_predictive.py` | `tables/posterior_predictive.csv`, `posterior_predictive_replicates.csv` | Section 6 ($M_0$), Figure 11 |
+| `check_importance_sampling.py` | `tables/check_importance_sampling.csv` | Section 5 |
+| `crosscheck_pymc.py` (optional) | `tables/crosscheck_pymc.csv` | Section 5 |
+| `sensitivity_priors.py`, `sensitivity_data.py` | `tables/sensitivity_priors.csv`, `sensitivity_data.csv` | sensitivity of $M_0$ (not in the report) |
+| `validate_rating_slopes.py` | `tables/validation_rating_slopes_recovery.csv`, `validation_rating_slopes_coverage.csv` | Table 1 |
+| `fit_rating_slopes.py` | `results/draws_rating_slopes.npz`, `tables/posterior_rating_slopes.csv`, `favourite_win_probability.csv`, `posterior_predictive_rating_slopes.csv` | Section 6, Figure 3 |
+| `validate_moves.py` | `tables/validation_moves_recovery.csv`, `validation_moves_coverage.csv` | Table 1 |
+| `fit_moves.py` | `results/draws_moves.npz`, `tables/posterior_moves_shared.csv`, `posterior_first_moves.csv`, `posterior_replies.csv`, `sampler_diagnostics_moves.csv` | Section 6 ($M_2$) |
+| `validate_full.py` | `tables/validation_full_recovery.csv`, `validation_full_repeated.csv`, `validation_full_coverage.csv` | Section 5, Table 1, Figure 6 |
+| `fit_full.py` | `results/draws_full.npz`, `tables/posterior_full_shared.csv`, `posterior_full_first_moves.csv`, `posterior_full_replies.csv`, `posterior_full_players.csv`, `sampler_diagnostics_full.csv` | Section 6, Table 3, Figures 5, 7 |
+| `posterior_predictive_full.py` | `tables/posterior_predictive_full.csv`, `posterior_predictive_full_replicates.csv` | Section 6, Figure 4 |
+| `sensitivity_full.py` | `tables/sensitivity_full.csv` | Table 2 |
+| `make_report_numbers.py` | `../report/generated/numbers.tex`, `table_validation.tex`, `table_sensitivity.tex`, `table_final.tex`, `table_cleaning.tex` | every number of the report, Tables 1 to 3 |
+
+| Figure script | Output | In the report |
+| --- | --- | --- |
+| `fig_data.py` | `figures/data.*` | Figure 1 |
+| `fig_model_full.py` | `figures/model_full.*` | Figure 2 |
+| `fig_rating_slopes.py` | `figures/rating_slopes.*` | Figure 3 |
+| `fig_posterior_predictive_full.py` | `figures/posterior_predictive_full.*` | Figure 4 |
+| `fig_moves.py` | `figures/moves.*` | Figure 5 |
+| `fig_validation_full.py` | `figures/validation_full.*` | Figure 6 |
+| `fig_trace_full.py` | `figures/trace_full.*` | Figure 7 |
+| `fig_model.py` | `figures/model.*` | Figure 8 |
+| `fig_validation.py` | `figures/validation.*` | Figure 9 |
+| `fig_trace.py` | `figures/trace.*` | Figure 10 |
+| `fig_posterior_predictive.py` | `figures/posterior_predictive.*` | Figure 11 |
+| `fig_openings.py` | `figures/openings.*` | Figure 12 |
+
+Each figure script writes `figures/<name>.pdf` for the report, `figures/<name>.png` for a quick look, and `figures/<name>.tex`, a figure environment with a caption computed from the data (used for the figures in the appendices).
+
+Modules: `sampler.py` holds the data loading and the sampler of $M_0$ to $M_1$ (one effect per opening, one rating slope per group), `sampler_moves.py` the sampler of $M_2$, `sampler_full.py` the sampler of the final model, `diagnostics.py` split-$\hat R$, effective sample sizes and Monte Carlo errors, `sensitivity.py` the refit-and-compare code of the sensitivity of $M_0$, and `plotting.py` the shared style of the figures.
 
 ## Data
 
 Chess Game Dataset (Lichess), uploaded by datasnaek on Kaggle: https://www.kaggle.com/datasets/datasnaek/chess (CC0: Public Domain).
-
-## Project checklist
-
-Remove this section before submission. Each open item has an issue on GitHub.
-Due: Monday 16 November 2026, 23:59 Paris time, on EduNao.
-
-### Done
-
-- [x] Topic chosen after T10 was taken, and approved by the professor
-- [x] Pitch deck made
-- [x] Project folder created, LaTeX template copied into `report/`
-- [x] Data downloaded from Kaggle (`download_data.py`)
-- [x] Data cleaned (`prepare_data.py`): 20,058 raw games to 17,682 decisive games, 359 openings
-- [x] Cleaning and summary tables written
-- [x] Sampler written (`sampler.py`)
-- [x] Diagnostics written: split-Rhat, ESS, Monte Carlo error (`diagnostics.py`)
-- [x] Sampler matches exact grid integration on a small problem (`check_sampler.py`)
-- [x] Validation on simulated games (`validate_simulated.py`)
-- [x] Real data fitted (`fit_real.py`), split-Rhat at most 1.005
-- [x] Posterior summaries written
-
-### To do: analysis
-
-- [ ] Run longer chains for the final numbers ([#1](https://github.com/widodu77/bayesan-report/issues/1))
-- [ ] Posterior predictive checks ([#2](https://github.com/widodu77/bayesan-report/issues/2))
-- [ ] Prior sensitivity analysis ([#3](https://github.com/widodu77/bayesan-report/issues/3))
-- [ ] Data sensitivity analysis ([#4](https://github.com/widodu77/bayesan-report/issues/4))
-- [ ] Importance sampling on the model without openings ([#5](https://github.com/widodu77/bayesan-report/issues/5))
-- [ ] Optional: PyMC cross-check of the hierarchical model ([#6](https://github.com/widodu77/bayesan-report/issues/6))
-
-### To do: figures
-
-- [ ] Figure: descriptive view of the data ([#7](https://github.com/widodu77/bayesan-report/issues/7))
-- [ ] Figure: the model as a Bayesian network ([#8](https://github.com/widodu77/bayesan-report/issues/8))
-- [ ] Figure: validation on simulated data ([#9](https://github.com/widodu77/bayesan-report/issues/9))
-- [ ] Figure: trace plots and autocorrelations ([#10](https://github.com/widodu77/bayesan-report/issues/10))
-- [ ] Figure: ranking of the openings with uncertainty ([#11](https://github.com/widodu77/bayesan-report/issues/11))
-- [ ] Figure: posterior predictive checks ([#12](https://github.com/widodu77/bayesan-report/issues/12))
-
-### To do: report
-
-- [ ] Set up the report file ([#13](https://github.com/widodu77/bayesan-report/issues/13))
-- [ ] Report: Introduction ([#14](https://github.com/widodu77/bayesan-report/issues/14))
-- [ ] Report: Data ([#15](https://github.com/widodu77/bayesan-report/issues/15))
-- [ ] Report: Model ([#16](https://github.com/widodu77/bayesan-report/issues/16))
-- [ ] Report: Method ([#17](https://github.com/widodu77/bayesan-report/issues/17))
-- [ ] Report: Validation ([#18](https://github.com/widodu77/bayesan-report/issues/18))
-- [ ] Report: Results ([#19](https://github.com/widodu77/bayesan-report/issues/19))
-- [ ] Report: Discussion and limitations ([#20](https://github.com/widodu77/bayesan-report/issues/20))
-- [ ] Report: References ([#21](https://github.com/widodu77/bayesan-report/issues/21))
-- [ ] Final report review ([#25](https://github.com/widodu77/bayesan-report/issues/25))
-
-### To do: code and submission
-
-- [ ] One script that runs everything ([#22](https://github.com/widodu77/bayesan-report/issues/22))
-- [ ] Finish the README ([#23](https://github.com/widodu77/bayesan-report/issues/23))
-- [ ] Final run from a clean state ([#24](https://github.com/widodu77/bayesan-report/issues/24))
-- [ ] Make sure both of you can explain every part ([#26](https://github.com/widodu77/bayesan-report/issues/26))
-- [ ] Build the zip and upload it to EduNao ([#27](https://github.com/widodu77/bayesan-report/issues/27))

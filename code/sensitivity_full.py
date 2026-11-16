@@ -4,8 +4,14 @@ Each variant refits the final model with the same seed and settings, so differen
 variant. For each one the table reports the shared parameters and the headline claims: White's
 advantage after 1.e4, how much the first move and the reply matter, the Sicilian against 1...e5, and 1.e3.
 
+The diffuse prior on the precisions lets the spread between first moves, learned from only 20
+first moves, wander towards zero, where the chains move slowly; that variant gets chains four times
+longer (LONG_KEEP) to reach the same convergence as the others.
+
+Usage: python sensitivity_full.py [--only VARIANT], where --only refits one variant and replaces its row.
 Output: tables/sensitivity_full.csv
 """
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -18,7 +24,8 @@ from sampler import Priors, load_games
 
 TABLES = Path(__file__).resolve().parent / "tables"
 SEED = 20261121
-N_BURN, N_KEEP = 2000, 20_000
+N_BURN, N_KEEP, LONG_KEEP = 2000, 20_000, 80_000
+LONG_CHAINS = {"tau Gamma(0.5, 0.005)"}
 
 
 def logistic(x):
@@ -75,20 +82,36 @@ def summary(name, description, data, codes, draws):
     return row
 
 
+def fit_variant(name, description, options, priors):
+    data, codes = load_games(**options)
+    n_keep = LONG_KEEP if name in LONG_CHAINS else N_KEEP
+    draws, _, _ = sampler_full.fit(data, priors, SEED, n_burn=N_BURN, n_keep=n_keep, n_pilot=3000,
+                                   parallel=True, u_every=n_keep)
+    row = summary(name, description, data, codes, draws)
+    row["kept_draws_per_chain"] = n_keep
+    print(f"{name}: beta {row['beta_rated_mean']:.3f}, sigma_player {row['sigma_player_mean']:.3f}, "
+          f"e4 {100 * row['p_white_e4_mean']:.1f}%, c5 {100 * row['p_white_e4_c5_mean']:.1f}% vs e5 "
+          f"{100 * row['p_white_e4_e5_mean']:.1f}% (P {row['prob_sicilian_better_for_black']:.3f}), "
+          f"P(move > reply) {row['prob_move_matters_more']:.2f}, Rhat {row['largest_rhat']:.3f}, "
+          f"ESS {row['smallest_ess']:.0f}", flush=True)
+    return row
+
+
 def main():
+    path = TABLES / "sensitivity_full.csv"
+    if "--only" in sys.argv:
+        name = sys.argv[sys.argv.index("--only") + 1]
+        variant = next(v for v in variants() if v[0] == name)
+        table = pd.read_csv(path)
+        row = fit_variant(*variant)
+        for column, value in row.items():
+            table.loc[table["variant"] == name, column] = value
+        table.to_csv(path, index=False)
+        return
     rows = []
-    for name, description, options, priors in variants():
-        data, codes = load_games(**options)
-        draws, _, _ = sampler_full.fit(data, priors, SEED, n_burn=N_BURN, n_keep=N_KEEP, n_pilot=3000,
-                                       parallel=True, u_every=N_KEEP)
-        rows.append(summary(name, description, data, codes, draws))
-        r = rows[-1]
-        print(f"{name}: beta {r['beta_rated_mean']:.3f}, sigma_player {r['sigma_player_mean']:.3f}, "
-              f"e4 {100 * r['p_white_e4_mean']:.1f}%, c5 {100 * r['p_white_e4_c5_mean']:.1f}% vs e5 "
-              f"{100 * r['p_white_e4_e5_mean']:.1f}% (P {r['prob_sicilian_better_for_black']:.3f}), "
-              f"P(move > reply) {r['prob_move_matters_more']:.2f}, Rhat {r['largest_rhat']:.3f}, "
-              f"ESS {r['smallest_ess']:.0f}", flush=True)
-        pd.DataFrame(rows).to_csv(TABLES / "sensitivity_full.csv", index=False)
+    for variant in variants():
+        rows.append(fit_variant(*variant))
+        pd.DataFrame(rows).to_csv(path, index=False)
 
 
 if __name__ == "__main__":
