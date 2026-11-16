@@ -20,6 +20,10 @@ To build the report, from `../report`: `pdflatex report`, `bibtex report`, then 
 
 The data, `data/raw/games.csv`, is included (CC0); `download_data.py` downloads it again only if it is missing.
 
+## The notebook
+
+`chess_analysis.ipynb` walks through the whole project, from the raw data to the answer, and is the easiest place to start reading. It does not fit any model: it only reads the tables that the scripts save in `tables/` (all of them are included), so it runs in a few seconds with the packages of `requirements.txt` and `jupyter`. Since every script has a fixed seed, running `run_all.py` again rebuilds exactly the same tables. Its Part 12 recomputes the main numbers of the report from the tables and checks that they match `../report/generated/numbers.tex`.
+
 ## What produces what
 
 The report has three models besides the final one: $M_0$ with one effect per opening code, $M_1$ with rated and unrated slopes, $M_2$ with first moves and replies, and the final model $M_3$ with player effects.
@@ -39,6 +43,7 @@ The report has three models besides the final one: $M_0$ with one effect per ope
 | `validate_moves.py` | `tables/validation_moves_recovery.csv`, `validation_moves_coverage.csv` | Table 1 |
 | `validate_full.py` | `tables/validation_full_recovery.csv`, `validation_full_repeated.csv`, `validation_full_coverage.csv` | Section 5, Table 1, Figure 6 |
 | `fit_full.py` | `results/draws_full.npz`, `tables/posterior_full_shared.csv`, `posterior_full_first_moves.csv`, `posterior_full_replies.csv`, `posterior_full_players.csv`, `sampler_diagnostics_full.csv` | Section 6, Table 3, Figures 5, 7 |
+| `export_traces.py` | `tables/trace_full.csv`, `autocorrelation_full.csv`, `favourite_full.csv` | the notebook (Parts 8 and 9) |
 | `posterior_predictive_full.py` | `tables/posterior_predictive_full.csv`, `posterior_predictive_full_replicates.csv` | Section 6, Figure 4 |
 | `sensitivity_full.py` | `tables/sensitivity_full.csv` | Table 2 |
 | `make_report_numbers.py` | `../report/generated/numbers.tex`, `table_validation.tex`, `table_sensitivity.tex`, `table_final.tex` | every number of the report, Tables 1 to 3 |

@@ -32,6 +32,7 @@ STEPS = [
     # Final model, with player effects
     "validate_full.py",
     "fit_full.py",
+    "export_traces.py",
     "posterior_predictive_full.py",
     "sensitivity_full.py",
     # Figures
