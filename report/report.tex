@@ -106,7 +106,7 @@ We use the Chess Game Dataset of the Lichess server \citep{lichess2017kaggle}, p
 \section{Model}\label{sec:model}
 %--------------------------------------------------------------------------
 
-\paragraph{Path to the final model.} ($M_0$) $\Pr(y_i = 1) = \logistic(\theta_{o(i)} + \beta \Delta_i)$ with one effect $\theta_o \sim \Normal(\mu, \sigma^2)$ for each of the \nOpenings{} opening codes; ($M_1$) one slope $\beta_g$ per group $g$, because one slope could not reproduce the win share against the rating gap; ($M_2$) the opening code replaced by the pair $c = (m, r)$ of White's first move $m$ and Black's reply $r$, each chosen by one player alone, in a two-level hierarchy; ($M_3$) one effect per player, because the games of a player were not independent given $M_2$.
+\paragraph{Why each part of the model.} We added a part only when the simpler model failed a check or could not answer the question. $M_0$ has $\Pr(y_i = 1) = \logistic(\theta_{o(i)} + \beta \Delta_i)$ with one effect $\theta_o \sim \Normal(\mu, \sigma^2)$ for each of the \nOpenings{} opening codes. Its posterior predictive check failed on the win share against the rating gap, so $M_1$ has one slope $\beta_g$ per group $g$. An opening code mixes the moves of both players and cannot say who controls the advantage, so $M_2$ uses the pair $c = (m, r)$ of White's first move $m$ and Black's reply $r$ in a two-level hierarchy. The games of a player were not independent given $M_2$, so the final model $M_3$ adds one effect per player.
 
 \paragraph{Final model.} Game $i$ is played by White $w(i)$ against Black $b(i)$ in pair $c(i)$, whose first move is $m(c(i))$ (\cref{fig:model_full}):
 \begin{gather}
