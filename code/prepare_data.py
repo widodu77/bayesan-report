@@ -16,7 +16,7 @@ MIN_PLIES = 10  # under five moves per side the game was abandoned, not played
 MIN_GAMES_WELL_OBSERVED = 30
 
 COLUMNS = ["id", "rated", "turns", "victory_status", "winner", "white_id", "white_rating",
-           "black_id", "black_rating", "delta", "opening_eco", "opening_name"]
+           "black_id", "black_rating", "delta", "opening_eco", "opening_name", "first_move", "reply"]
 
 
 def clean(raw):
@@ -64,6 +64,9 @@ def main():
     raw = pd.read_csv(RAW)
     games, log = clean(raw)
     games["delta"] = (games["white_rating"] - games["black_rating"]) / 400
+    # White's first move and Black's reply, each chosen by one player alone.
+    moves = games["moves"].str.split()
+    games["first_move"], games["reply"] = moves.str[0], moves.str[1]
 
     PROCESSED.parent.mkdir(parents=True, exist_ok=True)
     TABLES.mkdir(parents=True, exist_ok=True)

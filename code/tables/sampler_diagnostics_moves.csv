@@ -1,0 +1,9 @@
+statistic,value
+"acceptance rate of beta (rated, unrated)","[0.464, 0.458]"
+median acceptance rate of theta,0.33458750000000004
+"largest split-Rhat, shared parameters",1.0035756473047035
+"smallest ESS, shared parameters",989.2533133224706
+"largest split-Rhat, first moves",1.0061246247404256
+"smallest ESS, first moves",796.0480605743873
+"largest split-Rhat, pairs",1.005085038662844
+"smallest ESS, pairs",815.6028414981589
