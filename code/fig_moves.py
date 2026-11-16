@@ -1,7 +1,7 @@
 """Figure: White's chance of winning by first move, and by Black's reply to 1.e4.
 
-Input:  tables/posterior_first_moves.csv, tables/posterior_replies.csv, tables/posterior_moves_shared.csv
-        (from fit_moves.py)
+Input:  tables/posterior_full_first_moves.csv, tables/posterior_full_replies.csv, tables/posterior_full_shared.csv
+        (from fit_full.py, the final model)
 Output: figures/moves.pdf, .png and .tex
 """
 from pathlib import Path
@@ -35,9 +35,9 @@ def interval_panel(ax, rows, labels, reference, reference_label, title, highligh
 
 
 def main():
-    first = pd.read_csv(TABLES / "posterior_first_moves.csv")
-    replies = pd.read_csv(TABLES / "posterior_replies.csv")
-    shared = pd.read_csv(TABLES / "posterior_moves_shared.csv").set_index("quantity")
+    first = pd.read_csv(TABLES / "posterior_full_first_moves.csv")
+    replies = pd.read_csv(TABLES / "posterior_full_replies.csv")
+    shared = pd.read_csv(TABLES / "posterior_full_shared.csv").set_index("quantity")
 
     first = first[first["games"] >= MIN_GAMES_FIRST_MOVE].copy()
     first["label"] = "1." + first["first_move"]
@@ -58,8 +58,9 @@ def main():
     spread_reply = shared.loc["sigma_reply (spread between Black's replies to one first move)"]
     difference = shared.loc["sigma_move minus sigma_reply"]
     caption = (
-        "White's chance of winning a decisive game against an opponent of the same rating, from the model of "
-        "White's first move and Black's reply, each chosen by one player alone. Dots are posterior means and "
+        "White's chance of winning a decisive game against an opponent of the same rating, from the final model "
+        "of White's first move and Black's reply, each chosen by one player alone, with rated and unrated rating "
+        "slopes and player effects (two players of average strength for their rating). Dots are posterior means and "
         "bars 90\\% intervals, in orange for the two moves discussed below; the number of decisive games is in "
         "parentheses. "
         f"(a): first moves with at least {MIN_GAMES_FIRST_MOVE} games. 1.e3 is clearly worse for White "

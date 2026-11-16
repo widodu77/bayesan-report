@@ -41,6 +41,9 @@ class Games:
     slope_names: tuple = ("all games",)
     family: np.ndarray = None  # first move of each opening, only with load_games(openings="moves")
     family_names: tuple = ()
+    white_player: np.ndarray = None  # index of each game's White player, for the model of sampler_full.py
+    black_player: np.ndarray = None
+    n_players: int = 0
 
     @property
     def games_per_opening(self):
@@ -91,7 +94,10 @@ def load_games(path=PROCESSED, draws_as_half=False, rated_only=False, drop_ratin
     else:
         raise ValueError(f"unknown openings: {openings}")
     y = (games["winner"] == "white").to_numpy(dtype=float) + 0.5 * (games["winner"] == "draw").to_numpy()
-    data = Games(y=y, delta=games["delta"].to_numpy(), opening=opening, n_openings=len(codes))
+    players = pd.Index(sorted(set(games["white_id"]) | set(games["black_id"])))
+    data = Games(y=y, delta=games["delta"].to_numpy(), opening=opening, n_openings=len(codes),
+                 white_player=players.get_indexer(games["white_id"]),
+                 black_player=players.get_indexer(games["black_id"]), n_players=len(players))
     if openings == "moves":
         family, family_names = pd.factorize(pd.Series(codes).str.split().str[0], sort=True)
         data = replace(data, family=family, family_names=tuple(family_names))
