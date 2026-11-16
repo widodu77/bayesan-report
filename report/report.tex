@@ -153,13 +153,13 @@ draw each $\gamma_m$, then $\mu$, from their Normal full conditionals, and $\tau
 
 \paragraph{Rescaling moves.} Most players have one or two games, so each $u_p$ is held near the current spread and the spread near the $u_p$: one-at-a-time updates creep along this funnel, and in a first version the player spread had an effective sample size of 6 from 20{,}000 draws on simulated data. The rescaling moves of \cref{alg:sampler} move a level and its precision together \citep{liu2000generalised}. They leave the Normal prior of the level invariant, so the acceptance probability is $\min\{1, \exp(\Delta\ell - 2a\varepsilon - b\tau(e^{-2\varepsilon} - 1))\}$ with $\Delta\ell$ the change of log-likelihood and $(a, b) = (1, 0.05)$ (\cref{app:conditionals}); the same quantity then reached an effective sample size of 399.
 
-\paragraph{Tuning and runs.} Each proposal scale is 2.38 posterior standard deviations \citep{roberts1997weak}, estimated on the second half of a 3{,}000-iteration pilot run; median acceptance rates are then \acceptTheta{} for the pairs and \acceptPlayers{} for the players. We run 4 chains from points drawn from the prior, discard 2{,}000 iterations and keep 40{,}000 per chain (12 minutes with parallel chains), and check them with split-$\hat R$ \citep{gelman1992inference,vehtari2021rank} and effective sample sizes from Geyer's initial positive sequence \citep{geyer1992practical}, which we implemented.
+\paragraph{Tuning and runs.} Each proposal scale is 2.38 posterior standard deviations \citep{roberts1997weak}, estimated on the second half of a 3{,}000-iteration pilot run; median acceptance rates are then \acceptTheta{} for the pairs and \acceptPlayers{} for the players. We run 4 chains from points drawn from the prior, discard 2{,}000 iterations and keep 40{,}000 per chain (12 minutes with parallel chains), and check them with split-$\hat R$ \citep{gelman1992inference,course2026notes} and effective sample sizes from Geyer's initial positive sequence \citep{geyer1992practical}, which we implemented.
 
 %--------------------------------------------------------------------------
 \section{Validation on simulated data}\label{sec:validation}
 %--------------------------------------------------------------------------
 
-Each model was validated before its first real fit, on games simulated from the model with the real rating gaps, groups, openings and players (\cref{tab:validation}). The decisive test draws the parameters of 100 data sets from the prior: if the sampler is correct, the posterior intervals then contain the truth at their nominal rate, whatever the prior. They do, for every parameter of every model, including the \nPlayers{} player effects (\cref{fig:validation_full} in \cref{app:figures}). For $M_0$ the sampler also matches an exact grid integration on a small problem (within \gridMaxZ{} Monte Carlo standard errors), importance sampling with a Laplace proposal matches Metropolis--Hastings without openings, and PyMC \citep{abrilpla2023pymc}, used only as a cross-check, matches the posterior (within \pymcMaxZ{} Monte Carlo standard errors).
+Each model was validated before its first real fit, on games simulated from the model with the real rating gaps, groups, openings and players (\cref{tab:validation}). The decisive test draws the parameters of 100 data sets from the prior: if the sampler is correct, the posterior intervals then contain the truth at their nominal rate, whatever the prior. They do, for every parameter of every model, including the \nPlayers{} player effects (\cref{fig:validation_full} in \cref{app:figures}). For $M_0$ the sampler also matches an exact grid integration on a small problem (within \gridMaxZ{} Monte Carlo standard errors), importance sampling with a Laplace proposal matches Metropolis--Hastings without openings (within \isMaxZ{} Monte Carlo standard errors), and PyMC \citep{abrilpla2023pymc}, used only as a cross-check, matches the posterior (within \pymcMaxZ{} Monte Carlo standard errors).
 
 \begin{table}[t]
   \centering
@@ -262,15 +262,10 @@ hence their Metropolis--Hastings steps. The player effects $u_p$ of one colour s
   \input{generated/table_final.tex}
 \end{table}
 
-\Cref{tab:final} gives the posterior summaries of the final model. \Cref{fig:validation_full} shows the validation of the final model and \cref{fig:trace_full} its convergence on the real data. The other figures concern the first model $M_0$, with one effect per opening code: its Bayesian network (\cref{fig:model}), validation (\cref{fig:validation}), convergence (\cref{fig:trace}), posterior predictive checks (\cref{fig:posterior_predictive}) and the ranking of the opening codes it gives (\cref{fig:openings}).
+\Cref{tab:final} gives the posterior summaries of the final model, \cref{fig:validation_full} its validation on simulated games and \cref{fig:trace_full} its convergence on the real data.
 
 \input{../code/figures/validation_full.tex}
 \input{../code/figures/trace_full.tex}
-\input{../code/figures/model.tex}
-\input{../code/figures/validation.tex}
-\input{../code/figures/trace.tex}
-\input{../code/figures/posterior_predictive.tex}
-\input{../code/figures/openings.tex}
 
 \section{Code}\label{app:code}
 

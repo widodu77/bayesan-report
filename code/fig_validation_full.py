@@ -1,7 +1,6 @@
 """Figure: validation of the final model (sampler_full.py) on simulated games.
 
-Input:  tables/validation_full_recovery.csv, tables/validation_full_repeated.csv,
-        tables/validation_full_coverage.csv (from validate_full.py)
+Input:  tables/validation_full_recovery.csv, tables/validation_full_coverage.csv (from validate_full.py)
 Output: figures/validation_full.pdf, .png and .tex
 """
 from pathlib import Path
@@ -10,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from plotting import COLORS, INK, MUTED, TEXT_WIDTH, plt, save
-from validate_full import N_DATASETS, N_REPEATS
+from validate_full import N_DATASETS
 
 TABLES = Path(__file__).resolve().parent / "tables"
 SYMBOLS = {"beta, rated games": r"$\beta_{\mathrm{rated}}$", "beta, unrated games": r"$\beta_{\mathrm{unrated}}$",
@@ -20,7 +19,6 @@ SYMBOLS = {"beta, rated games": r"$\beta_{\mathrm{rated}}$", "beta, unrated game
 
 def main():
     recovery = pd.read_csv(TABLES / "validation_full_recovery.csv").set_index("quantity")
-    repeated = pd.read_csv(TABLES / "validation_full_repeated.csv").set_index("quantity")
     coverage = pd.read_csv(TABLES / "validation_full_coverage.csv").set_index("quantity")
 
     fig = plt.figure(figsize=(TEXT_WIDTH, 5.4), layout="constrained")
@@ -63,24 +61,14 @@ def main():
     coverage_ax.set_title(f"(b) coverage over {N_DATASETS} data sets drawn from the prior", loc="left")
     coverage_ax.legend(loc="lower right", ncols=2)
 
-    reply = repeated.loc["sigma_reply"]
-    move = repeated.loc["sigma_move"]
     caption = (
         "Validation of the final model on simulated games, with the real rating gaps, rated status, pairs and "
         "players and the results drawn from the model. (a): one data set simulated with chosen values (orange "
-        "lines); the posterior mean (black) and central 90\\% interval (blue). The spreads and $\\mu$ describe "
-        "effects drawn once per data set, so the gray triangles mark the values realized in this data set, which "
-        "the posterior targets. "
-        f"Over {N_REPEATS} data sets simulated with the same values, the slopes, $\\mu$ and "
-        "$\\sigma_{\\mathrm{p}}$ show no bias, but $\\sigma_{\\mathrm{r}}$ is overestimated by "
-        f"{reply['mean_error']:.3f} on average (standard error {reply['se_mean_error']:.3f}) and "
-        f"$\\sigma_{{\\mathrm{{m}}}}$ by {move['mean_error']:.3f} ({move['se_mean_error']:.3f}): the "
-        "$\\text{Gamma}(1, 0.05)$ prior on the precisions puts less than 1\\% of its mass on a spread as small "
-        "as 0.10, and with few games per pair the data do not fully override it. "
+        "lines), with the posterior mean (black) and central 90\\% interval (blue); the gray triangles mark the "
+        "values of the spreads and of $\\mu$ realized in this data set, which the posterior targets. "
         "(b): share of the 50\\% and 90\\% intervals that contain the true value, with $\\pm 2$ standard errors, "
         f"over {N_DATASETS} data sets whose parameters are drawn from the prior; for $\\gamma_m$, $\\theta_c$ and "
-        "$u_p$ the share is over all first moves, pairs or players of all data sets. The shares match the nominal "
-        "levels, as they must when the sampler is correct, whatever the prior."
+        "$u_p$ the share is over all first moves, pairs or players of all data sets."
     )
     save(fig, "validation_full", caption)
 

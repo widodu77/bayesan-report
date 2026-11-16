@@ -68,9 +68,6 @@ def data_numbers(m):
     m.add("shareRated", pct(summary["share of games that are rated"]))
     m.add("shareFifteen", pct(summary["share of games with a player rated exactly 1500"]))
 
-    players = read("posterior_full_players")
-    active = players[players["games"] >= 10]
-    m.add("nActivePlayers", num(len(active), 0))
     replies = read("posterior_full_replies")
     m.add("nPairs", num(len(replies), 0))
     m.add("nFirstMoves", num(replies["first_move"].nunique(), 0))
@@ -78,49 +75,35 @@ def data_numbers(m):
 
 def first_model_numbers(m):
     shared = read("posterior_shared", "quantity")
-    m.interval("betaEco", shared.loc["beta"])
-    m.interval("muEco", shared.loc["mu"], 3)
-    m.interval("sigmaEco", shared.loc["sigma"])
     m.interval("advantageEco", shared.loc["white advantage in rating points (400 mu / beta)"], 1)
-    m.interval("pWhiteEco", shared.loc["P(white wins) at equal ratings, average opening"], 1, 100)
 
     check = read("posterior_predictive", "statistic")
     chi2 = check.loc["chi-square discrepancy over the bins of rating gap"]
     m.add("pShapeEco", num(chi2["p_value"], 3))
-    gap = check[check.index.str.startswith("white win share, rating gap")]
-    worst = gap["p_value_two_sided"].idxmin()
-    m.add("worstGapBin", worst.removeprefix("white win share, rating gap ").replace("-", "$-$"))
-    m.add("worstGapObserved", pct(gap.loc[worst, "observed"]))
-    m.add("worstGapReplicated", pct(gap.loc[worst, "replicated_mean"]))
 
     grid = read("check_quadrature")
     m.add("gridMaxZ", num(grid["z"].abs().max(), 2))
     importance = read("check_importance_sampling")
-    m.add("isWeightEss", num(importance["is_weight_ess"].iloc[0], 0))
-    m.add("isDraws", num(importance["is_draws"].iloc[0], 0))
     m.add("isMaxZ", num(importance[["z_mean", "z_sd"]].abs().to_numpy().max(), 2))
     pymc = read("crosscheck_pymc")
     m.add("pymcMaxZ", num(pymc["z_mean"].abs().max(), 2))
-    m.add("pymcThetaGap", pct(pymc["value"].dropna().iloc[0], 1))
 
 
 def rating_slope_numbers(m):
-    shared = read("posterior_rating_slopes", "quantity")
-    m.interval("betaRatedSlopes", shared.loc["beta, rated games"])
-    m.interval("betaUnratedSlopes", shared.loc["beta, unrated games"])
     checks = read("posterior_predictive_rating_slopes")
-    for model, tag in (("one slope", "One"), ("rated and unrated slopes", "Two")):
-        for subset, name in (("all games", "All"), ("rated games", "Rated"), ("unrated games", "Unrated")):
-            row = checks[(checks["model"] == model)
-                         & (checks["statistic"] == f"chi-square over deciles of rating gap, {subset}")].iloc[0]
-            p = row["p_value"]
-            m.add(f"pShape{tag}{name}", "<0.001" if p < 0.001 else num(p, 3))
+    for model, tag, subset, name in (("one slope", "One", "all games", "All"),
+                                     ("one slope", "One", "rated games", "Rated"),
+                                     ("one slope", "One", "unrated games", "Unrated"),
+                                     ("rated and unrated slopes", "Two", "all games", "All")):
+        row = checks[(checks["model"] == model)
+                     & (checks["statistic"] == f"chi-square over deciles of rating gap, {subset}")].iloc[0]
+        p = row["p_value"]
+        m.add(f"pShape{tag}{name}", "<0.001" if p < 0.001 else num(p, 3))
 
 
 def final_numbers(m):
     shared = read("posterior_full_shared", "quantity")
     m.interval("betaRated", shared.loc["beta, rated games"])
-    m.interval("betaUnrated", shared.loc["beta, unrated games"])
     m.interval("betaDiff", shared.loc["beta, rated minus unrated"])
     m.interval("sigmaMove", shared.loc["sigma_move (spread between White's first moves)"])
     m.interval("sigmaReply", shared.loc["sigma_reply (spread between Black's replies to one first move)"])
@@ -142,32 +125,26 @@ def final_numbers(m):
         m.add(f"pWhite{name}", pct(row["p_white_equal_ratings_mean"]))
         m.add(f"pWhite{name}Low", pct(row["p_white_equal_ratings_q05"]))
         m.add(f"pWhite{name}High", pct(row["p_white_equal_ratings_q95"]))
-        m.add(f"games{name}", num(row["games"], 0))
-    m.add("probEthreeAbove", num(first.loc["e3", "prob_above_average"], 3))
 
     replies = read("posterior_full_replies")
     e4 = replies[replies["first_move"] == "e4"].set_index("reply")
-    for reply, name in (("c5", "Sicilian"), ("e5", "OpenGame"), ("e6", "French")):
+    for reply, name in (("c5", "Sicilian"), ("e5", "OpenGame")):
         row = e4.loc[reply]
         m.add(f"pWhite{name}", pct(row["p_white_equal_ratings_mean"]))
         m.add(f"pWhite{name}Low", pct(row["p_white_equal_ratings_q05"]))
         m.add(f"pWhite{name}High", pct(row["p_white_equal_ratings_q95"]))
-        m.add(f"games{name}", num(row["games"], 0))
     m.add("probSicilian", num(e4.loc["c5", "prob_below_compared"], 3))
-    m.add("probFrench", num(e4.loc["e6", "prob_below_compared"], 2))
 
     # Chance that the higher-rated player wins a rated game after 1.e4, averaged over the two colours.
     draws = np.load(RESULTS / "draws_full.npz", allow_pickle=True)
     beta = draws["beta"][:, ::int(draws["theta_thin"]), 0].ravel()
     gamma = draws["gamma"][..., list(draws["family_names"]).index("e4")].ravel().astype(float)
-    for gap in (100, 200):
-        x = gap / 400
-        score = 0.5 * (logistic(gamma + beta * x) + logistic(beta * x - gamma))
-        tag = "Hundred" if gap == 100 else "TwoHundred"
-        m.add(f"favourite{tag}", pct(score.mean()))
-        m.add(f"favourite{tag}Low", pct(np.percentile(score, 5)))
-        m.add(f"favourite{tag}High", pct(np.percentile(score, 95)))
-        m.add(f"elo{tag}", pct(1 / (1 + 10 ** (-gap / 400))))
+    x = 200 / 400
+    score = 0.5 * (logistic(gamma + beta * x) + logistic(beta * x - gamma))
+    m.add("favouriteTwoHundred", pct(score.mean()))
+    m.add("favouriteTwoHundredLow", pct(np.percentile(score, 5)))
+    m.add("favouriteTwoHundredHigh", pct(np.percentile(score, 95)))
+    m.add("eloTwoHundred", pct(1 / (1 + 10 ** (-x))))
 
     diagnostics = read("sampler_diagnostics_full", "statistic")["value"]
     m.add("rhatFinal", num(max(float(diagnostics[k]) for k in diagnostics.index if "Rhat" in k), 3))
@@ -217,16 +194,6 @@ def validation_table():
         lines.append(f"{label} & {int(recovery['inside_90'].sum())} of {len(recovery)} & "
                      f"{pct(coverage['coverage_50'].min(), 0)}--{pct(coverage['coverage_50'].max(), 0)}\\% & "
                      f"{pct(coverage['coverage_90'].min(), 0)}--{pct(coverage['coverage_90'].max(), 0)}\\% \\\\")
-    lines += [r"\bottomrule", r"\end{tabular}"]
-    return "\n".join(lines)
-
-
-def cleaning_table():
-    cleaning = read("data_cleaning")
-    lines = [r"\begin{tabular}{@{}lrr@{}}", r"\toprule", r"Step & Games & Removed \\", r"\midrule"]
-    for _, row in cleaning.iterrows():
-        removed = "" if row["removed"] == 0 else num(row["removed"], 0)
-        lines.append(f"{row['step'].capitalize()} & {num(row['games'], 0)} & {removed} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines)
 
@@ -289,16 +256,12 @@ def sensitivity_numbers(m):
     m.add("sensMoveLow", num(table["prob_move_matters_more"].min(), 2))
     m.add("sensMoveHigh", num(table["prob_move_matters_more"].max(), 2))
     m.add("sensEthreeLow", num(table["prob_e3_below_e4"].min(), 3))
-    m.add("sensPlayerLow", num(table["sigma_player_mean"].min(), 2))
-    m.add("sensPlayerHigh", num(table["sigma_player_mean"].max(), 2))
     m.add("sensPlayerBaseline", num(table.loc["baseline", "sigma_player_mean"], 2))
     m.add("sensPlayerRatedOnly", num(table.loc["rated games only", "sigma_player_mean"], 2))
     m.add("sensPlayerNoFifteen", num(table.loc["no player rated 1500", "sigma_player_mean"], 2))
-    m.add("sensRhatMax", num(table["largest_rhat"].max(), 3))
     diffuse = "tau Gamma(0.5, 0.005)"
     m.add("sensRhatOthers", num(table.drop(index=diffuse)["largest_rhat"].max(), 3))
     m.add("sensRhatDiffuse", num(table.loc[diffuse, "largest_rhat"], 3))
-    m.add("sensEssDiffuse", num(table.loc[diffuse, "smallest_ess"], 0))
     m.add("nVariants", num(len(table), 0))
 
 
@@ -313,11 +276,11 @@ def main():
     sensitivity_numbers(m)
     (OUT / "numbers.tex").write_text("% Written by code/make_report_numbers.py; do not edit.\n"
                                      + "\n".join(m.lines) + "\n", encoding="utf-8")
-    for name, content in (("cleaning", cleaning_table()), ("validation", validation_table()),
-                          ("final", final_table()), ("sensitivity", sensitivity_table())):
+    for name, content in (("validation", validation_table()), ("final", final_table()),
+                          ("sensitivity", sensitivity_table())):
         (OUT / f"table_{name}.tex").write_text("% Written by code/make_report_numbers.py; do not edit.\n"
                                                + content + "\n", encoding="utf-8")
-    print(f"{len(m.lines)} numbers and 4 tables written to {OUT}")
+    print(f"{len(m.lines)} numbers and 3 tables written to {OUT}")
 
 
 if __name__ == "__main__":

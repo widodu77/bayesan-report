@@ -63,11 +63,7 @@ def main():
         f"Convergence of the sampler of the final model on the real data: {n_chains} chains started from points "
         f"drawn from the prior. (a): the first {N_START} iterations; (b): the {n_keep:,} iterations kept per chain "
         f"after a burn-in of {n_burn:,}, with the split-$\\hat R$ and the effective sample size (ESS) of the four "
-        "chains together; (c): autocorrelation of each chain after burn-in. The slope $\\beta$ mixes fast. The "
-        "spreads of the replies and of the players, which have moves that rescale their whole level at once, "
-        f"reach an ESS of {summary['sigma_reply'][1]:,.0f} and {summary['sigma_player'][1]:,.0f}; "
-        "$\\mu$ and $\\sigma_{\\mathrm{m}}$, learned from only 20 first moves, are the slowest, with an ESS of "
-        f"{summary['mu'][1]:,.0f} and {summary['sigma_move'][1]:,.0f}, still enough for small Monte Carlo errors."
+        "chains together; (c): autocorrelation of each chain after burn-in."
     )
     save(fig, "trace_full", caption)
 

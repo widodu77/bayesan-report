@@ -24,14 +24,11 @@ STEPS = [
     "fit_real.py",
     "posterior_predictive.py",
     "check_importance_sampling.py",
-    "sensitivity_priors.py",
-    "sensitivity_data.py",
     # Rated and unrated rating slopes
     "validate_rating_slopes.py",
     "fit_rating_slopes.py",
     # White's first move and Black's reply
     "validate_moves.py",
-    "fit_moves.py",
     # Final model, with player effects
     "validate_full.py",
     "fit_full.py",
@@ -39,14 +36,9 @@ STEPS = [
     "sensitivity_full.py",
     # Figures
     "fig_data.py",
-    "fig_model.py",
     "fig_model_full.py",
-    "fig_validation.py",
     "fig_validation_full.py",
-    "fig_trace.py",
     "fig_trace_full.py",
-    "fig_openings.py",
-    "fig_posterior_predictive.py",
     "fig_rating_slopes.py",
     "fig_moves.py",
     "fig_posterior_predictive_full.py",

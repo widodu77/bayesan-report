@@ -11,7 +11,6 @@ import pandas as pd
 
 import sampler_full
 from diagnostics import effective_sample_size, split_rhat, summarize
-from fit_moves import first_move_table, reply_table
 from fit_real import N_BURN, N_KEEP, THETA_THIN, logistic
 from sampler import PROCESSED, Priors, load_games
 
@@ -22,6 +21,56 @@ SEED = 20261119
 U_EVERY = 40  # kept draws of the 14,832 player effects: one every 40 iterations
 MIN_GAMES_PLAYER = 10  # players whose effects get convergence diagnostics
 SHARED = ("mu", "sigma_move", "sigma_reply", "sigma_player")
+MIN_GAMES_CONTRAST = 300  # first moves whose replies are compared with the most played reply
+
+
+def first_move_table(data, draws):
+    gamma = draws["gamma"].reshape(-1, len(data.family_names))
+    games = np.bincount(data.family[data.opening], minlength=len(data.family_names))
+    wins = np.bincount(data.family[data.opening], data.y, len(data.family_names))
+    best = np.bincount(gamma.argmax(axis=1), minlength=len(data.family_names)) / len(gamma)
+    probability = logistic(gamma)
+    low, high = np.percentile(probability, [5, 95], axis=0)
+    return pd.DataFrame({
+        "first_move": data.family_names,
+        "games": games,
+        "white_win_share": wins / np.maximum(games, 1),
+        "gamma_mean": gamma.mean(axis=0),
+        "p_white_equal_ratings_mean": probability.mean(axis=0),
+        "p_white_equal_ratings_q05": low,
+        "p_white_equal_ratings_q95": high,
+        "prob_above_average": np.mean(gamma > draws["mu"].reshape(-1, 1), axis=0),
+        "prob_best_first_move": best,
+    }).sort_values("games", ascending=False)
+
+
+def reply_table(data, codes, draws):
+    theta = draws["theta"].reshape(-1, data.n_openings)
+    gamma = draws["gamma"].reshape(-1, len(data.family_names))
+    games = data.games_per_opening
+    probability = logistic(theta)
+    low, high = np.percentile(probability, [5, 95], axis=0)
+    table = pd.DataFrame({
+        "first_move": [code.split()[0] for code in codes],
+        "reply": [code.split()[1] for code in codes],
+        "games": games,
+        "white_win_share": np.bincount(data.opening, data.y, data.n_openings) / games,
+        "theta_mean": theta.mean(axis=0),
+        "p_white_equal_ratings_mean": probability.mean(axis=0),
+        "p_white_equal_ratings_q05": low,
+        "p_white_equal_ratings_q95": high,
+        # Does this reply leave White less than the average of its first move?
+        "prob_below_first_move": np.mean(theta < gamma[:, data.family], axis=0),
+        "compared_with": "",
+        "prob_below_compared": np.nan,
+    })
+    for move, rows in table.groupby("first_move"):
+        if rows["games"].sum() < MIN_GAMES_CONTRAST:
+            continue
+        reference = rows["games"].idxmax()
+        table.loc[rows.index, "compared_with"] = f"{move} {table.loc[reference, 'reply']}"
+        table.loc[rows.index, "prob_below_compared"] = np.mean(theta[:, rows.index] < theta[:, [reference]], axis=0)
+    return table.sort_values(["first_move", "games"], ascending=[True, False])
 
 
 def player_names():

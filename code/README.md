@@ -29,21 +29,19 @@ The report has three models besides the final one: $M_0$ with one effect per ope
 | `download_data.py` | `data/raw/games.csv` | Section 2 |
 | `prepare_data.py` | `data/processed/games_clean.csv`, `tables/data_cleaning.csv`, `tables/data_summary.csv` | Section 2 |
 | `check_sampler.py` | `tables/check_quadrature.csv` | Section 5 (grid check of $M_0$) |
-| `validate_simulated.py` | `tables/validation_recovery.csv`, `validation_recovery_theta.csv`, `validation_repeated.csv`, `validation_coverage.csv` | Table 1, Figure 9 |
-| `fit_real.py` | `results/draws.npz`, `tables/posterior_shared.csv`, `posterior_openings.csv`, `sampler_diagnostics.csv` | Section 6 ($M_0$), Figures 10, 12 |
-| `posterior_predictive.py` | `tables/posterior_predictive.csv`, `posterior_predictive_replicates.csv` | Section 6 ($M_0$), Figure 11 |
+| `validate_simulated.py` | `tables/validation_recovery.csv`, `validation_coverage.csv` | Table 1 |
+| `fit_real.py` | `results/draws.npz`, `tables/posterior_shared.csv`, `posterior_openings.csv`, `sampler_diagnostics.csv` | Section 6 ($M_0$) |
+| `posterior_predictive.py` | `tables/posterior_predictive.csv`, `posterior_predictive_replicates.csv` | Section 6 ($M_0$) |
 | `check_importance_sampling.py` | `tables/check_importance_sampling.csv` | Section 5 |
 | `crosscheck_pymc.py` (optional) | `tables/crosscheck_pymc.csv` | Section 5 |
-| `sensitivity_priors.py`, `sensitivity_data.py` | `tables/sensitivity_priors.csv`, `sensitivity_data.csv` | sensitivity of $M_0$ (not in the report) |
 | `validate_rating_slopes.py` | `tables/validation_rating_slopes_recovery.csv`, `validation_rating_slopes_coverage.csv` | Table 1 |
 | `fit_rating_slopes.py` | `results/draws_rating_slopes.npz`, `tables/posterior_rating_slopes.csv`, `favourite_win_probability.csv`, `posterior_predictive_rating_slopes.csv` | Section 6, Figure 3 |
 | `validate_moves.py` | `tables/validation_moves_recovery.csv`, `validation_moves_coverage.csv` | Table 1 |
-| `fit_moves.py` | `results/draws_moves.npz`, `tables/posterior_moves_shared.csv`, `posterior_first_moves.csv`, `posterior_replies.csv`, `sampler_diagnostics_moves.csv` | Section 6 ($M_2$) |
 | `validate_full.py` | `tables/validation_full_recovery.csv`, `validation_full_repeated.csv`, `validation_full_coverage.csv` | Section 5, Table 1, Figure 6 |
 | `fit_full.py` | `results/draws_full.npz`, `tables/posterior_full_shared.csv`, `posterior_full_first_moves.csv`, `posterior_full_replies.csv`, `posterior_full_players.csv`, `sampler_diagnostics_full.csv` | Section 6, Table 3, Figures 5, 7 |
 | `posterior_predictive_full.py` | `tables/posterior_predictive_full.csv`, `posterior_predictive_full_replicates.csv` | Section 6, Figure 4 |
 | `sensitivity_full.py` | `tables/sensitivity_full.csv` | Table 2 |
-| `make_report_numbers.py` | `../report/generated/numbers.tex`, `table_validation.tex`, `table_sensitivity.tex`, `table_final.tex`, `table_cleaning.tex` | every number of the report, Tables 1 to 3 |
+| `make_report_numbers.py` | `../report/generated/numbers.tex`, `table_validation.tex`, `table_sensitivity.tex`, `table_final.tex` | every number of the report, Tables 1 to 3 |
 
 | Figure script | Output | In the report |
 | --- | --- | --- |
@@ -54,15 +52,10 @@ The report has three models besides the final one: $M_0$ with one effect per ope
 | `fig_moves.py` | `figures/moves.*` | Figure 5 |
 | `fig_validation_full.py` | `figures/validation_full.*` | Figure 6 |
 | `fig_trace_full.py` | `figures/trace_full.*` | Figure 7 |
-| `fig_model.py` | `figures/model.*` | Figure 8 |
-| `fig_validation.py` | `figures/validation.*` | Figure 9 |
-| `fig_trace.py` | `figures/trace.*` | Figure 10 |
-| `fig_posterior_predictive.py` | `figures/posterior_predictive.*` | Figure 11 |
-| `fig_openings.py` | `figures/openings.*` | Figure 12 |
 
 Each figure script writes `figures/<name>.pdf` for the report, `figures/<name>.png` for a quick look, and `figures/<name>.tex`, a figure environment with a caption computed from the data (used for the figures in the appendices).
 
-Modules: `sampler.py` holds the data loading and the sampler of $M_0$ to $M_1$ (one effect per opening, one rating slope per group), `sampler_moves.py` the sampler of $M_2$, `sampler_full.py` the sampler of the final model, `diagnostics.py` split-$\hat R$, effective sample sizes and Monte Carlo errors, `sensitivity.py` the refit-and-compare code of the sensitivity of $M_0$, and `plotting.py` the shared style of the figures.
+Modules: `sampler.py` holds the data loading and the sampler of $M_0$ to $M_1$ (one effect per opening, one rating slope per group), `sampler_moves.py` the sampler of $M_2$ (used for its validation; the report fits only the final model), `sampler_full.py` the sampler of the final model, `diagnostics.py` split-$\hat R$, effective sample sizes and Monte Carlo errors, and `plotting.py` the shared style of the figures.
 
 ## Data
 

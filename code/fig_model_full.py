@@ -8,9 +8,11 @@ Output: figures/model_full.pdf, .png and .tex
 """
 from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch
 
-from fig_model import OBSERVED, RADIUS
 from plotting import INK, MUTED, TEXT_WIDTH, plt, save
 from sampler import Priors, load_games
+
+RADIUS = 0.42
+OBSERVED = "#c9c8c2"
 
 NODES = {  # name: (x, y, label, observed)
     "mu": (0.9, 6.0, r"$\mu$", False),
