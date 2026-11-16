@@ -1,7 +1,6 @@
 """Fit the model to the real games and write posterior summaries and diagnostics.
 
-Output: results/draws.npz, tables/posterior_shared.csv, tables/posterior_openings.csv,
-tables/sampler_diagnostics.csv
+Output: results/draws.npz, tables/posterior_shared.csv, tables/posterior_openings.csv
 """
 from pathlib import Path
 
@@ -97,7 +96,6 @@ def main():
     diagnostics = diagnostics_table(openings, shared, acceptance)
     shared.to_csv(TABLES / "posterior_shared.csv", index=False)
     openings.to_csv(TABLES / "posterior_openings.csv", index=False)
-    diagnostics.to_csv(TABLES / "sampler_diagnostics.csv", index=False)
 
     print(shared.round(4).to_string(index=False))
     print()

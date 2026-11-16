@@ -29,6 +29,7 @@ STEPS = [
     "fit_rating_slopes.py",
     # White's first move and Black's reply
     "validate_moves.py",
+    "fit_moves.py",
     # Final model, with player effects
     "validate_full.py",
     "fit_full.py",

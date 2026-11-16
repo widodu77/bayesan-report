@@ -1,19 +1,21 @@
 """Write every number and table of the report from the result tables, so that the report quotes
 only numbers produced by the code.
 
-Input:  tables/*.csv (from the analysis scripts), results/draws_full.npz (from fit_full.py)
+Input:  tables/*.csv (from the analysis scripts and export_traces.py)
 Output: ../report/generated/numbers.tex (one LaTeX macro per number) and ../report/generated/table_*.tex
 """
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
+from rounding import fmt
+from sampler import Priors
 from validate_full import N_REPEATS
 
 ROOT = Path(__file__).resolve().parent
 TABLES = ROOT / "tables"
-RESULTS = ROOT / "results"
 OUT = ROOT.parent / "report" / "generated"
 
 
@@ -22,14 +24,14 @@ def read(name, index=None):
     return table.set_index(index) if index else table
 
 
-def num(x, digits=2):
-    """A number with thousands separators that LaTeX typesets correctly."""
-    return f"{x:,.{digits}f}".replace(",", "{,}").replace("-", "$-$", 1) if x < 0 else \
-        f"{x:,.{digits}f}".replace(",", "{,}")
+def num(x, digits=2, scale=1):
+    """A number rounded as everywhere else (rounding.py), with thousands separators that LaTeX typesets."""
+    text = fmt(x, digits, scale).replace(",", "{,}")
+    return "$-$" + text[1:] if text.startswith("-") else text
 
 
 def pct(x, digits=1):
-    return num(100 * x, digits)
+    return num(x, digits, scale=100)
 
 
 def logistic(x):
@@ -48,7 +50,7 @@ class Macros:
     def interval(self, name, row, digits=2, scale=1.0):
         """Mean, and the two ends of the 90% interval, as three macros."""
         for suffix, column in (("", "mean"), ("Low", "q05"), ("High", "q95")):
-            self.add(name + suffix, num(scale * row[column], digits))
+            self.add(name + suffix, num(row[column], digits, scale))
 
 
 def data_numbers(m):
@@ -71,6 +73,17 @@ def data_numbers(m):
     replies = read("posterior_full_replies")
     m.add("nPairs", num(len(replies), 0))
     m.add("nFirstMoves", num(replies["first_move"].nunique(), 0))
+
+
+def prior_numbers(m):
+    """What the priors say on the scale of the question."""
+    priors = Priors()
+    m.add("priorWinLow", pct(1 / (1 + np.exp(1.96 * priors.mu_sd)), 0))
+    m.add("priorWinHigh", pct(1 / (1 + np.exp(-1.96 * priors.mu_sd)), 0))
+    tau = stats.gamma(a=priors.tau_shape, scale=1 / priors.tau_rate)
+    m.add("priorSpreadLow", num(tau.ppf(0.95) ** -0.5, 2))
+    m.add("priorSpreadHigh", num(tau.ppf(0.05) ** -0.5, 2))
+    m.add("priorSpreadBelowTenth", pct(tau.sf(0.10 ** -2), 2))
 
 
 def first_model_numbers(m):
@@ -135,20 +148,18 @@ def final_numbers(m):
         m.add(f"pWhite{name}High", pct(row["p_white_equal_ratings_q95"]))
     m.add("probSicilian", num(e4.loc["c5", "prob_below_compared"], 3))
 
-    # Chance that the higher-rated player wins a rated game after 1.e4, averaged over the two colours.
-    draws = np.load(RESULTS / "draws_full.npz", allow_pickle=True)
-    beta = draws["beta"][:, ::int(draws["theta_thin"]), 0].ravel()
-    gamma = draws["gamma"][..., list(draws["family_names"]).index("e4")].ravel().astype(float)
-    x = 200 / 400
-    score = 0.5 * (logistic(gamma + beta * x) + logistic(beta * x - gamma))
-    m.add("favouriteTwoHundred", pct(score.mean()))
-    m.add("favouriteTwoHundredLow", pct(np.percentile(score, 5)))
-    m.add("favouriteTwoHundredHigh", pct(np.percentile(score, 95)))
-    m.add("eloTwoHundred", pct(1 / (1 + 10 ** (-x))))
+    # Chance that the higher-rated player wins a rated game after 1.e4, averaged over the two colours
+    # (computed from the draws by export_traces.py, the same table the notebook reads).
+    favourite = read("favourite_full", "rating_gap").loc[200]
+    m.add("favouriteTwoHundred", pct(favourite["mean"]))
+    m.add("favouriteTwoHundredLow", pct(favourite["q05"]))
+    m.add("favouriteTwoHundredHigh", pct(favourite["q95"]))
+    m.add("eloTwoHundred", pct(favourite["elo_expected_score"]))
 
     diagnostics = read("sampler_diagnostics_full", "statistic")["value"]
     m.add("rhatFinal", num(max(float(diagnostics[k]) for k in diagnostics.index if "Rhat" in k), 3))
     m.add("essFinalShared", num(float(diagnostics["smallest ESS, shared parameters"]), 0))
+    m.add("essFinalFirstMoves", num(float(diagnostics["smallest ESS, first moves"]), 0))
     m.add("essFinalPairs", num(float(diagnostics["smallest ESS, pairs"]), 0))
     m.add("essFinalPlayers", num(float(diagnostics[[k for k in diagnostics.index
                                                     if k.startswith("smallest ESS, players")][0]]), 0))
@@ -219,8 +230,8 @@ def final_table():
     ]
     lines = [r"\begin{tabular}{@{}lrr@{}}", r"\toprule", r"Quantity & Mean & 90\% interval \\", r"\midrule"]
     for label, row, digits, scale in rows:
-        lines.append(f"{label} & {num(scale * row['mean'], digits)} & "
-                     f"{num(scale * row['q05'], digits)} to {num(scale * row['q95'], digits)} \\\\")
+        lines.append(f"{label} & {num(row['mean'], digits, scale)} & "
+                     f"{num(row['q05'], digits, scale)} to {num(row['q95'], digits, scale)} \\\\")
     lines.append(r"\midrule")
     lines.append(r"\multicolumn{3}{@{}l}{$\Pr(\text{White wins})$ at equal ratings, \%} \\")
     for label, row in [("after 1.e4", first.loc["e4"]), ("after 1.d4", first.loc["d4"]),
@@ -269,6 +280,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     m = Macros()
     data_numbers(m)
+    prior_numbers(m)
     first_model_numbers(m)
     rating_slope_numbers(m)
     final_numbers(m)

@@ -9,6 +9,7 @@ import numpy as np
 
 from diagnostics import autocovariance, effective_sample_size, split_rhat
 from plotting import TEXT_WIDTH, plt, save
+from rounding import fmt
 
 RESULTS = Path(__file__).resolve().parent / "results"
 PARAMETERS = [("beta", r"$\beta_{\mathrm{rated}}$"), ("mu", r"$\mu$"), ("sigma_move", r"$\sigma_{\mathrm{m}}$"),
@@ -47,7 +48,7 @@ def main():
         axes[row, 2].axhline(0, color="#52514e", linewidth=0.6)
         axes[row, 2].set_ylim(-0.1, 1.02)
         rhat, ess = summary[name]
-        axes[row, 1].text(0.99, 0.96, f"$\\hat R$ = {rhat:.3f}, ESS = {ess:,.0f}", transform=axes[row, 1].transAxes,
+        axes[row, 1].text(0.99, 0.96, f"$\\hat R$ = {fmt(rhat, 3)}, ESS = {fmt(ess, 0)}", transform=axes[row, 1].transAxes,
                           ha="right", va="top", fontsize=7,
                           bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8, "pad": 1})
     axes[0, 0].set_title(f"(a) first {N_START} iterations", loc="left")

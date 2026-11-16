@@ -1,7 +1,9 @@
 """Prior and data sensitivity of the final model (sampler_full.py).
 
-Each variant refits the final model with the same seed and settings, so differences come from the
-variant. For each one the table reports the shared parameters and the headline claims: White's
+The baseline is the main fit itself: same seed and chain length as fit_full.py, so its row repeats
+the numbers of the report exactly. The other variants refit the final model with one shared seed and
+shorter chains; differences of the order of the Monte Carlo error (about 0.001 on a probability) are
+noise, larger ones come from the variant. For each one the table reports the shared parameters and the headline claims: White's
 advantage after 1.e4, how much the first move and the reply matter, the Sicilian against 1...e5, and 1.e3.
 
 The diffuse prior on the precisions lets the spread between first moves, learned from only 20
@@ -18,6 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+import fit_full
 import sampler_full
 from diagnostics import effective_sample_size, split_rhat
 from sampler import Priors, load_games
@@ -84,8 +87,11 @@ def summary(name, description, data, codes, draws):
 
 def fit_variant(name, description, options, priors):
     data, codes = load_games(**options)
-    n_keep = LONG_KEEP if name in LONG_CHAINS else N_KEEP
-    draws, _, _ = sampler_full.fit(data, priors, SEED, n_burn=N_BURN, n_keep=n_keep, n_pilot=3000,
+    if name == "baseline":  # the main fit of fit_full.py, draw for draw
+        seed, n_keep = fit_full.SEED, fit_full.N_KEEP
+    else:
+        seed, n_keep = SEED, LONG_KEEP if name in LONG_CHAINS else N_KEEP
+    draws, _, _ = sampler_full.fit(data, priors, seed, n_burn=N_BURN, n_keep=n_keep, n_pilot=3000,
                                    parallel=True, u_every=n_keep)
     row = summary(name, description, data, codes, draws)
     row["kept_draws_per_chain"] = n_keep

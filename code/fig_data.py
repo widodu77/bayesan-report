@@ -6,6 +6,7 @@ Output: figures/data.pdf, .png and .tex
 import numpy as np
 
 from plotting import COLORS, INK, MUTED, TEXT_WIDTH, plt, save
+from rounding import fmt
 from sampler import load_games
 
 GAP_EDGES = np.arange(-600, 601, 50)  # rating points; wider gaps are rare and pooled in the end bins
@@ -23,7 +24,7 @@ def main():
     left.set_yscale("log")
     left.set_xlim(0, len(games) + 1)
     left.axhline(np.median(games), color=INK, linewidth=0.8, linestyle="--")
-    left.text(len(games), np.median(games) * 1.25, f"median {np.median(games):.0f} games", ha="right", va="bottom",
+    left.text(len(games), np.median(games) * 1.25, f"median {fmt(np.median(games), 0)} games", ha="right", va="bottom",
               fontsize=7, color=INK)
     left.set_xlabel("opening (ECO code), from most to least played")
     left.set_ylabel("decisive games")
@@ -52,14 +53,14 @@ def main():
     caption = (
         f"The {len(data.y):,} decisive games. (a): number of games for each of the {len(games)} openings, "
         f"identified by their ECO code, on a log scale. The data are very unbalanced: the most played opening "
-        f"has {games[0]} games, the median {np.median(games):.0f}, and {singles} openings have a single game, "
+        f"has {games[0]} games, the median {fmt(np.median(games), 0)}, and {singles} openings have a single game, "
         "which motivates a hierarchical model that pools information between openings. "
         "(b): share of games won by White in bins of 50 rating points, with 90\\% binomial intervals; gaps "
         f"beyond $\\pm${GAP_EDGES[-1]} points are pooled in the end bins. The dashed line is the expected score "
         "of the Elo formula, $1/(1 + 10^{-\\text{gap}/400})$. The rating gap is the main driver of the result, "
         "but the observed curve is flatter than the Elo formula, so the slope $\\beta$ is left free in the "
         "model. White wins more than half of the games between players of nearly equal rating "
-        f"({100 * data.y[level].mean():.1f}\\% of the {level.sum():,} games with a gap under 25 points), "
+        f"({fmt(data.y[level].mean(), 1, 100)}\\% of the {level.sum():,} games with a gap under 25 points), "
         "which the model attributes to the first move and to the opening."
     )
     save(fig, "data", caption)

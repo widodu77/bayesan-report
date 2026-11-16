@@ -11,7 +11,7 @@ Section 6.3): X2(y, theta) = sum over bins of (wins - expected wins)^2 / varianc
 P(X2(y_rep, theta) >= X2(y, theta) | y).
 
 Input:  results/draws.npz (from fit_real.py)
-Output: tables/posterior_predictive.csv, tables/posterior_predictive_replicates.csv
+Output: tables/posterior_predictive.csv
 """
 from pathlib import Path
 
@@ -109,13 +109,9 @@ def main():
         "p_value": np.mean(chi2_replicated >= chi2_observed),
         "p_value_two_sided": np.nan,  # only large values signal a misfit
     }
-    replicates = pd.DataFrame(replicated, columns=names)
-    replicates["chi-square discrepancy, observed results"] = chi2_observed
-    replicates["chi-square discrepancy, replicated results"] = chi2_replicated
 
     TABLES.mkdir(exist_ok=True)
     table.to_csv(TABLES / "posterior_predictive.csv", index=False)
-    replicates.to_csv(TABLES / "posterior_predictive_replicates.csv", index=False, float_format="%.6g")
     print(table.round(4).to_string(index=False))
 
 

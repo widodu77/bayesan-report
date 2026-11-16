@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from plotting import COLORS, INK, MUTED, TEXT_WIDTH, plt, save
+from rounding import fmt
 
 TABLES = Path(__file__).resolve().parent / "tables"
 MIN_GAMES_FIRST_MOVE = 90
@@ -64,19 +65,19 @@ def main():
         "bars 90\\% intervals, in orange for the two moves discussed below; the number of decisive games is in "
         "parentheses. "
         f"(a): first moves with at least {MIN_GAMES_FIRST_MOVE} games. 1.e3 is clearly worse for White "
-        f"({100 * e3['p_white_equal_ratings_mean']:.1f}\\%, {100 * e3['p_white_equal_ratings_q05']:.1f} to "
-        f"{100 * e3['p_white_equal_ratings_q95']:.1f}\\%), and 1.c4 the best of the common moves "
-        f"({100 * c4['p_white_equal_ratings_mean']:.1f}\\%). "
+        f"({fmt(e3['p_white_equal_ratings_mean'], 1, 100)}\\%, {fmt(e3['p_white_equal_ratings_q05'], 1, 100)} to "
+        f"{fmt(e3['p_white_equal_ratings_q95'], 1, 100)}\\%), and 1.c4 the best of the common moves "
+        f"({fmt(c4['p_white_equal_ratings_mean'], 1, 100)}\\%). "
         f"(b): replies to 1.e4 with at least {MIN_GAMES_REPLY} games; the dashed line is 1.e4 on average. "
-        f"After the Sicilian, 1...c5, White wins {100 * sicilian['p_white_equal_ratings_mean']:.1f}\\% "
-        f"({100 * sicilian['p_white_equal_ratings_q05']:.1f} to {100 * sicilian['p_white_equal_ratings_q95']:.1f}\\%), "
-        f"against {100 * open_game['p_white_equal_ratings_mean']:.1f}\\% after 1...e5; the posterior "
+        f"After the Sicilian, 1...c5, White wins {fmt(sicilian['p_white_equal_ratings_mean'], 1, 100)}\\% "
+        f"({fmt(sicilian['p_white_equal_ratings_q05'], 1, 100)} to {fmt(sicilian['p_white_equal_ratings_q95'], 1, 100)}\\%), "
+        f"against {fmt(open_game['p_white_equal_ratings_mean'], 1, 100)}\\% after 1...e5; the posterior "
         f"probability that the Sicilian is better for Black than 1...e5 is "
-        f"{100 * sicilian['prob_below_compared']:.1f}\\%. "
+        f"{fmt(sicilian['prob_below_compared'], 1, 100)}\\%. "
         f"Overall, White's first move matters more than Black's reply: the spread between first moves, "
-        f"$\\sigma_{{\\text{{move}}}} = {spread_move['mean']:.2f}$, exceeds the spread between replies to one "
-        f"first move, $\\sigma_{{\\text{{reply}}}} = {spread_reply['mean']:.2f}$, with posterior probability "
-        f"{difference['prob_positive']:.2f}."
+        f"$\\sigma_{{\\text{{move}}}} = {fmt(spread_move['mean'], 2)}$, exceeds the spread between replies to one "
+        f"first move, $\\sigma_{{\\text{{reply}}}} = {fmt(spread_reply['mean'], 2)}$, with posterior probability "
+        f"{fmt(difference['prob_positive'], 2)}."
     )
     save(fig, "moves", caption)
 

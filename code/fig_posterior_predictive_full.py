@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from plotting import COLORS, INK, MUTED, TEXT_WIDTH, plt, save
+from rounding import fmt
 
 TABLES = Path(__file__).resolve().parent / "tables"
 MODELS = [("without player effects", "without player effects", COLORS[1], "o"),
@@ -43,7 +44,7 @@ def main():
         left.plot(np.median(replicated), y, "|", color=color, markersize=10, markeredgewidth=1.5)
         left.plot(observed.mean(), y, "o", color=INK, markersize=5)
         p = table.query("model == @model and statistic == @dispersion_name")["p_value"].iloc[0]
-        left.text(observed.mean() + 0.15, y, f"$p$ = {p:.3f}" if p >= 0.001 else "$p$ < 0.001", ha="left",
+        left.text(observed.mean() + 0.15, y, f"$p$ = {fmt(p, 3)}" if p >= 0.001 else "$p$ < 0.001", ha="left",
                   va="center", fontsize=7, color=INK)
     left.axvline(1, color=MUTED, linewidth=0.6, linestyle="--")
     left.set_xlim(0.7, 2.9)
@@ -78,11 +79,11 @@ def main():
         "standardized residuals over the players, close to 1 when a player's games are independent given the "
         "model. Black dots are the observed values averaged over posterior draws, bars the 90\\% interval and "
         "ticks the median of the replicated values. Without player effects the observed dispersion is "
-        f"{without.loc[dispersion_name, 'observed']:.2f}, far above what the model can produce "
-        f"({without.loc[dispersion_name, 'replicated_q05']:.2f} to "
-        f"{without.loc[dispersion_name, 'replicated_q95']:.2f}): the same players keep beating, or missing, their "
-        f"rating. With player effects it is {final.loc[dispersion_name, 'observed']:.2f} against "
-        f"{final.loc[dispersion_name, 'replicated_q05']:.2f} to {final.loc[dispersion_name, 'replicated_q95']:.2f}. "
+        f"{fmt(without.loc[dispersion_name, 'observed'], 2)}, far above what the model can produce "
+        f"({fmt(without.loc[dispersion_name, 'replicated_q05'], 2)} to "
+        f"{fmt(without.loc[dispersion_name, 'replicated_q95'], 2)}): the same players keep beating, or missing, their "
+        f"rating. With player effects it is {fmt(final.loc[dispersion_name, 'observed'], 2)} against "
+        f"{fmt(final.loc[dispersion_name, 'replicated_q05'], 2)} to {fmt(final.loc[dispersion_name, 'replicated_q95'], 2)}. "
         "(b): posterior predictive $p$-values of all the statistics, the share of replicated values at least as "
         "large as the observed one; values in the gray bands, below 0.05 or above 0.95, flag a feature of the "
         "data the model does not reproduce."

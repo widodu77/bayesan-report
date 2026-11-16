@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from plotting import COLORS, INK, MUTED, TEXT_WIDTH, plt, save
+from rounding import fmt
 from sampler import load_games
 
 ROOT = Path(__file__).resolve().parent
@@ -63,7 +64,7 @@ def main():
             np.percentile(probability, 95, axis=0)
         curve_ax.fill_between(grid, 100 * low, 100 * high, color=COLORS[k], alpha=0.25, linewidth=0)
         slope = posterior.loc[f"beta, {name}", "mean"]
-        curve_ax.plot(grid, 100 * mean, color=COLORS[k], linewidth=1.5, label=f"{name.split()[0]}, slope {slope:.2f}")
+        curve_ax.plot(grid, 100 * mean, color=COLORS[k], linewidth=1.5, label=f"{name.split()[0]}, slope {fmt(slope, 2)}")
     curve_ax.axhline(50, color=MUTED, linewidth=0.6)
     curve_ax.axvline(0, color=MUTED, linewidth=0.6)
     curve_ax.set_xlabel("rating gap, White minus Black (points)")
@@ -83,7 +84,7 @@ def main():
                           markeredgewidth=1.2)
             if row == 0:  # direct labels on the first row instead of a legend
                 check_ax.text(line["replicated_q95"] + 7, y, label, va="center", ha="left", fontsize=7, color=color)
-            check_ax.text(P_COLUMN, y, f"$p$ = {line['p_value']:.3f}" if line["p_value"] >= 0.001 else "$p$ < 0.001",
+            check_ax.text(P_COLUMN, y, f"$p$ = {fmt(line['p_value'], 3)}" if line["p_value"] >= 0.001 else "$p$ < 0.001",
                           va="center", ha="right", fontsize=7, color=INK)
     check_ax.set_yticks([-row for row in range(len(SUBSETS))], SUBSETS)
     check_ax.grid(axis="y", visible=False)
@@ -104,17 +105,17 @@ def main():
         "games; the lines and bands are the posterior mean and 90\\% interval of "
         "$\\operatorname{logit}^{-1}(\\mu + \\beta_g \\Delta)$ for the average opening, and the dashed line is "
         "the expected score of the Elo formula. The rating gap predicts the result much better in rated games: "
-        f"the slopes differ by {difference['mean']:.2f} (90\\% interval {difference['q05']:.2f} to "
-        f"{difference['q95']:.2f}). Both curves are flatter than the Elo formula: in rated games a player rated "
-        f"200 points higher wins {100 * rated_200['rated games, mean']:.1f}\\% of decisive games "
-        f"({100 * rated_200['rated games, q05']:.1f} to {100 * rated_200['rated games, q95']:.1f}\\%), not the "
-        f"{100 * rated_200['elo_expected_score']:.0f}\\% of the Elo formula. "
+        f"the slopes differ by {fmt(difference['mean'], 2)} (90\\% interval {fmt(difference['q05'], 2)} to "
+        f"{fmt(difference['q95'], 2)}). Both curves are flatter than the Elo formula: in rated games a player rated "
+        f"200 points higher wins {fmt(rated_200['rated games, mean'], 1, 100)}\\% of decisive games "
+        f"({fmt(rated_200['rated games, q05'], 1, 100)} to {fmt(rated_200['rated games, q95'], 1, 100)}\\%), not the "
+        f"{fmt(rated_200['elo_expected_score'], 0, 100)}\\% of the Elo formula. "
         "(b): chi-square discrepancy between wins and expected wins over the deciles of rating gap, on all games "
         "and within each group, for the model with one slope (open circles) and with two (filled); the dot is "
         "the realized discrepancy averaged over posterior draws and the bar the 90\\% interval of its replicated "
         "values, with the posterior predictive $p$-value. With one slope the shape of the curve is rejected "
-        f"($p = {p_one['p_value'].iloc[0]:.3f}$ on all games, and lower within each group); with two slopes the "
-        f"misfit disappears ($p = {p_two['p_value'].iloc[0]:.2f}$)."
+        f"($p = {fmt(p_one['p_value'].iloc[0], 3)}$ on all games, and lower within each group); with two slopes the "
+        f"misfit disappears ($p = {fmt(p_two['p_value'].iloc[0], 2)}$)."
     )
     save(fig, "rating_slopes", caption)
 
