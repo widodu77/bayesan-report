@@ -62,7 +62,7 @@ def one_repeat(args):
 
 def repeated_recovery(data):
     seeds = np.random.SeedSequence(SEED + 3).spawn(N_REPEATS)
-    with ProcessPoolExecutor(max_workers=min(12, os.cpu_count() - 2)) as pool:
+    with ProcessPoolExecutor(max_workers=max(1, min(12, (os.cpu_count() or 1) - 2))) as pool:
         results = pd.DataFrame(pool.map(one_repeat, [(data, s) for s in seeds], chunksize=1)).astype(float)
     rows = []
     for name, truth in [("beta", TRUE_BETA), ("mu", TRUE_MU), ("sigma", TRUE_SIGMA)]:
@@ -98,7 +98,7 @@ def one_dataset(args):
 
 def coverage(data):
     seeds = np.random.SeedSequence(SEED + 2).spawn(N_DATASETS)
-    with ProcessPoolExecutor(max_workers=min(12, os.cpu_count() - 2)) as pool:
+    with ProcessPoolExecutor(max_workers=max(1, min(12, (os.cpu_count() or 1) - 2))) as pool:
         results = pd.DataFrame(pool.map(one_dataset, [(data, s) for s in seeds], chunksize=1)).astype(float)
 
     rows = []

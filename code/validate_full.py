@@ -83,7 +83,7 @@ def one_repeat(args):
 
 def repeated_recovery(data):
     seeds = np.random.SeedSequence(SEED + 3).spawn(N_REPEATS)
-    with ProcessPoolExecutor(max_workers=min(12, os.cpu_count() - 2)) as pool:
+    with ProcessPoolExecutor(max_workers=max(1, min(12, (os.cpu_count() or 1) - 2))) as pool:
         results = pd.DataFrame(pool.map(one_repeat, [(data, s) for s in seeds], chunksize=1)).astype(float)
     names = [(f"beta[{k}]", f"beta, {name}", truth)
              for k, (name, truth) in enumerate(zip(data.slope_names, TRUE_BETA, strict=True))]
@@ -120,7 +120,7 @@ def one_dataset(args):
 
 def coverage(data):
     seeds = np.random.SeedSequence(SEED + 2).spawn(N_DATASETS)
-    with ProcessPoolExecutor(max_workers=min(12, os.cpu_count() - 2)) as pool:
+    with ProcessPoolExecutor(max_workers=max(1, min(12, (os.cpu_count() or 1) - 2))) as pool:
         results = pd.DataFrame(pool.map(one_dataset, [(data, s) for s in seeds], chunksize=1)).astype(float)
     names = {f"beta[{k}]": f"beta, {name}" for k, name in enumerate(data.slope_names)}
     names.update({name: name for name in (*SCALARS, "gamma", "theta", "u")})

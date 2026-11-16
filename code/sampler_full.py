@@ -231,13 +231,17 @@ def run_chain(data, priors, steps, batches, n_iter, rng, accumulate_from=0, u_ev
 def tune_steps(data, priors, batches, rng, n_pilot):
     """Set each proposal scale to 2.38 posterior standard deviations, measured on a pilot run."""
     kept = n_pilot // 2
-    draws, players, _ = run_chain(data, priors, initial_full_steps(data, priors), batches, n_pilot, rng,
+    initial = initial_full_steps(data, priors)
+    draws, players, _ = run_chain(data, priors, initial, batches, n_pilot, rng,
                                   accumulate_from=kept, u_every=n_pilot)
     u_mean = players["sum"] / players["count"]
     u_sd = np.sqrt(np.maximum(players["sumsq"] / players["count"] - u_mean**2, 0))
-    return Steps(theta=ROBERTS_SCALE * draws["theta"][kept:].std(axis=0),
+    theta_sd = draws["theta"][kept:].std(axis=0)
+    # A parameter that never moved in the pilot keeps its initial step, rather than a step of 0 that
+    # would freeze it for the whole run.
+    return Steps(theta=np.where(theta_sd > 0, ROBERTS_SCALE * theta_sd, initial.theta),
                  beta=np.array([ROBERTS_SCALE * draws["beta"][kept:, k].std() for k in range(data.n_slopes)]),
-                 u=ROBERTS_SCALE * u_sd,
+                 u=np.where(u_sd > 0, ROBERTS_SCALE * u_sd, initial.u),
                  scale_reply=max(ROBERTS_SCALE * np.log(draws["sigma_reply"][kept:]).std(), 1e-3),
                  scale_player=max(ROBERTS_SCALE * np.log(draws["sigma_player"][kept:]).std(), 1e-3))
 
