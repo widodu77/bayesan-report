@@ -295,6 +295,10 @@ def sensitivity_numbers(m):
     m.add("sensPlayerRatedOnly", num(table.loc["rated games only", "sigma_player_mean"], 2))
     m.add("sensPlayerNoFifteen", num(table.loc["no player rated 1500", "sigma_player_mean"], 2))
     m.add("sensRhatMax", num(table["largest_rhat"].max(), 3))
+    diffuse = "tau Gamma(0.5, 0.005)"
+    m.add("sensRhatOthers", num(table.drop(index=diffuse)["largest_rhat"].max(), 3))
+    m.add("sensRhatDiffuse", num(table.loc[diffuse, "largest_rhat"], 3))
+    m.add("sensEssDiffuse", num(table.loc[diffuse, "smallest_ess"], 0))
     m.add("nVariants", num(len(table), 0))
 
 
